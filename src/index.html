@@ -20,7 +20,10 @@
 
     #object {
       position: absolute;
-      background-color: tomato;
+      background-image: url('/Images/gupxCropped.png'); /* Update with the actual file path */
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
       transform-origin: center;
       touch-action: none;
     }
@@ -112,6 +115,8 @@
     <label>Y: <input type="number" id="inputY"></label>
     <label>Rotation: <input type="number" id="inputRotation"></label>
     <label>Size: <input type="number" id="inputSize"></label>
+    <label>Opacity: <input type="number" id="inputOpacity" min="0" max="1" step="0.01"></label>
+    <label>Visible: <input type="checkbox" id="inputVisible"></label>
   </div>
 
   <table id="keyframeTable">
@@ -122,6 +127,8 @@
         <th>Y</th>
         <th>Rotation</th>
         <th>Size</th>
+        <th>Opacity</th>
+        <th>Visible</th>
       </tr>
     </thead>
     <tbody>
@@ -139,6 +146,8 @@
     const inputY = document.getElementById("inputY");
     const inputRotation = document.getElementById("inputRotation");
     const inputSize = document.getElementById("inputSize");
+    const inputOpacity = document.getElementById("inputOpacity");
+    const inputVisible = document.getElementById("inputVisible");
 
     const markerTrack = document.getElementById("markerTrack");
     const keyframeTable = document.getElementById("keyframeTable").querySelector("tbody");
@@ -153,7 +162,9 @@
       x: 100,
       y: 100,
       size: 50,
-      rotation: 0
+      rotation: 0,
+      opacity: 1,
+      visible: true
     };
 
     function applyState(state) {
@@ -162,11 +173,15 @@
       object.style.width = `${state.size}px`;
       object.style.height = `${state.size}px`;
       object.style.transform = `rotate(${state.rotation}deg)`;
+      object.style.opacity = state.opacity;
+      object.style.display = state.visible ? "" : "none";
 
       inputX.value = Math.round(state.x);
       inputY.value = Math.round(state.y);
       inputRotation.value = Math.round(state.rotation);
       inputSize.value = Math.round(state.size);
+      inputOpacity.value = state.opacity;
+      inputVisible.checked = state.visible;
     }
 
     function readInputsToState() {
@@ -174,6 +189,8 @@
       currentState.y = parseFloat(inputY.value);
       currentState.rotation = parseFloat(inputRotation.value);
       currentState.size = parseFloat(inputSize.value);
+      currentState.opacity = parseFloat(inputOpacity.value);
+      currentState.visible = inputVisible.checked;
       applyState(currentState);
     }
 
@@ -181,6 +198,8 @@
     inputY.addEventListener("input", readInputsToState);
     inputRotation.addEventListener("input", readInputsToState);
     inputSize.addEventListener("input", readInputsToState);
+    inputOpacity.addEventListener("input", readInputsToState);
+    inputVisible.addEventListener("change", readInputsToState);
 
     addKeyframeBtn.addEventListener("click", () => {
       const time = parseFloat(timeline.value);
@@ -198,7 +217,9 @@
         x: lerp(a.x, b.x),
         y: lerp(a.y, b.y),
         size: lerp(a.size, b.size),
-        rotation: lerp(a.rotation, b.rotation)
+        rotation: lerp(a.rotation, b.rotation),
+        opacity: lerp(a.opacity, b.opacity),
+        visible: a.visible // visibility stays as previous keyframe until next
       };
     }
 
@@ -267,6 +288,8 @@
           <td>${Math.round(kf.y)}</td>
           <td>${Math.round(kf.rotation)}</td>
           <td>${Math.round(kf.size)}</td>
+          <td>${kf.opacity.toFixed(2)}</td>
+          <td>${kf.visible ? "Yes" : "No"}</td>
         `;
         row.addEventListener("click", () => {
           timeline.value = kf.time;
