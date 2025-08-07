@@ -108,6 +108,9 @@
     </div>
     <button id="addKeyframe">Add Keyframe</button>
     <button id="togglePlay">Play</button>
+    <button id="changeImageBtn">Change Image</button>
+    <button id="resetBtn">Reset</button>
+    <input type="file" id="imageInput" accept="image/*" style="display:none;">
   </div>
 
   <div id="fields">
@@ -115,8 +118,9 @@
     <label>Y: <input type="number" id="inputY"></label>
     <label>Rotation: <input type="number" id="inputRotation"></label>
     <label>Size: <input type="number" id="inputSize"></label>
-    <label>Opacity: <input type="number" id="inputOpacity" min="0" max="1" step="0.01"></label>
+    <label>Opacity: <input type="number" id="inputOpacity" min="0" max="100" step="1"></label>
     <label>Visible: <input type="checkbox" id="inputVisible"></label>
+    <label>Mirror: <input type="checkbox" id="inputMirror"></label>
   </div>
 
   <table id="keyframeTable">
@@ -129,6 +133,7 @@
         <th>Size</th>
         <th>Opacity</th>
         <th>Visible</th>
+        <th>Mirror</th>
       </tr>
     </thead>
     <tbody>
@@ -141,6 +146,9 @@
     const timeline = document.getElementById("timeline");
     const addKeyframeBtn = document.getElementById("addKeyframe");
     const togglePlayBtn = document.getElementById("togglePlay");
+    const changeImageBtn = document.getElementById("changeImageBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const imageInput = document.getElementById("imageInput");
 
     const inputX = document.getElementById("inputX");
     const inputY = document.getElementById("inputY");
@@ -148,6 +156,7 @@
     const inputSize = document.getElementById("inputSize");
     const inputOpacity = document.getElementById("inputOpacity");
     const inputVisible = document.getElementById("inputVisible");
+    const inputMirror = document.getElementById("inputMirror");
 
     const markerTrack = document.getElementById("markerTrack");
     const keyframeTable = document.getElementById("keyframeTable").querySelector("tbody");
@@ -164,7 +173,8 @@
       size: 50,
       rotation: 0,
       opacity: 1,
-      visible: true
+      visible: true,
+      mirror: false // <-- add this
     };
 
     function applyState(state) {
@@ -172,7 +182,7 @@
       object.style.top = `${state.y}px`;
       object.style.width = `${state.size}px`;
       object.style.height = `${state.size}px`;
-      object.style.transform = `rotate(${state.rotation}deg)`;
+      object.style.transform = `rotate(${state.rotation}deg) scaleX(${state.mirror ? -1 : 1})`;
       object.style.opacity = state.opacity;
       object.style.display = state.visible ? "" : "none";
 
@@ -180,8 +190,9 @@
       inputY.value = Math.round(state.y);
       inputRotation.value = Math.round(state.rotation);
       inputSize.value = Math.round(state.size);
-      inputOpacity.value = state.opacity;
+      inputOpacity.value = Math.round(state.opacity * 100);
       inputVisible.checked = state.visible;
+      inputMirror.checked = state.mirror;
     }
 
     function readInputsToState() {
@@ -189,8 +200,9 @@
       currentState.y = parseFloat(inputY.value);
       currentState.rotation = parseFloat(inputRotation.value);
       currentState.size = parseFloat(inputSize.value);
-      currentState.opacity = parseFloat(inputOpacity.value);
+      currentState.opacity = parseFloat(inputOpacity.value) / 100;
       currentState.visible = inputVisible.checked;
+      currentState.mirror = inputMirror.checked;
       applyState(currentState);
     }
 
@@ -200,6 +212,7 @@
     inputSize.addEventListener("input", readInputsToState);
     inputOpacity.addEventListener("input", readInputsToState);
     inputVisible.addEventListener("change", readInputsToState);
+    inputMirror.addEventListener("change", readInputsToState); // <-- add this
 
     addKeyframeBtn.addEventListener("click", () => {
       const time = parseFloat(timeline.value);
@@ -219,7 +232,8 @@
         size: lerp(a.size, b.size),
         rotation: lerp(a.rotation, b.rotation),
         opacity: lerp(a.opacity, b.opacity),
-        visible: a.visible // visibility stays as previous keyframe until next
+        visible: a.visible,
+        mirror: a.mirror // step, not interpolated
       };
     }
 
@@ -268,6 +282,41 @@
       }
     });
 
+    changeImageBtn.addEventListener("click", () => {
+      imageInput.click();
+    });
+
+    imageInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        object.style.backgroundImage = `url('${evt.target.result}')`;
+      };
+      reader.readAsDataURL(file);
+    });
+
+    resetBtn.addEventListener("click", () => {
+      currentState = {
+        x: 100,
+        y: 100,
+        size: 50,
+        rotation: 0,
+        opacity: 1,
+        visible: true,
+        mirror: false
+      };
+      keyframes.length = 0;
+      currentTime = 0;
+      timeline.value = 0;
+      playing = false;
+      togglePlayBtn.textContent = "Play";
+      clearInterval(playInterval);
+      applyState(currentState);
+      renderMarkers();
+      renderKeyframeTable();
+    });
+
     function renderMarkers() {
       markerTrack.innerHTML = "";
       keyframes.forEach((kf) => {
@@ -288,8 +337,9 @@
           <td>${Math.round(kf.y)}</td>
           <td>${Math.round(kf.rotation)}</td>
           <td>${Math.round(kf.size)}</td>
-          <td>${kf.opacity.toFixed(2)}</td>
+          <td>${Math.round(kf.opacity * 100)}</td>
           <td>${kf.visible ? "Yes" : "No"}</td>
+          <td>${kf.mirror ? "Yes" : "No"}</td>
         `;
         row.addEventListener("click", () => {
           timeline.value = kf.time;
