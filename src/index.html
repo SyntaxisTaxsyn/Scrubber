@@ -91,6 +91,22 @@
       background-color: #f0f8ff;
       cursor: pointer;
     }
+
+    #imagePanel {
+      position: absolute;
+      right: 20px;
+      top: 60px;
+      width: 240px;
+      background: #f8f8f8;
+      border: 1px solid #ccc;
+      padding: 12px;
+    }
+
+    #imageList {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 10px 0;
+    }
   </style>
 </head>
 <body>
@@ -126,6 +142,13 @@
     </label>
   </div>
 
+  <div id="imagePanel">
+    <h4 style="margin-top:0;">Object Images</h4>
+    <ul id="imageList" style="list-style:none; padding:0; margin:0 0 10px 0;"></ul>
+    <input type="file" id="addImageInput" accept="image/*" style="display:none;">
+    <button id="addImageBtn" style="width:100%;">Add Image</button>
+  </div>
+
   <table id="keyframeTable">
     <thead>
       <tr>
@@ -153,6 +176,7 @@
     const changeImageBtn = document.getElementById("changeImageBtn");
     const resetBtn = document.getElementById("resetBtn");
     const imageInput = document.getElementById("imageInput");
+    const addImageInput = document.getElementById("addImageInput");
 
     const inputX = document.getElementById("inputX");
     const inputY = document.getElementById("inputY");
@@ -312,7 +336,10 @@
       if (!file) return;
       const reader = new FileReader();
       reader.onload = function(evt) {
-        object.style.backgroundImage = `url('${evt.target.result}')`;
+        const label = prompt("Enter image label/description:", `Image ${objectImages.length + 1}`) || `Image ${objectImages.length + 1}`;
+        objectImages.push({ id: nextImageId++, label, url: evt.target.result });
+        renderImageSelect();
+        renderImageList(); // <-- add this
       };
       reader.readAsDataURL(file);
     });
@@ -454,10 +481,87 @@
         const label = prompt("Enter image label/description:", `Image ${objectImages.length + 1}`) || `Image ${objectImages.length + 1}`;
         objectImages.push({ id: nextImageId++, label, url: evt.target.result });
         renderImageSelect();
+        renderImageList();
       };
       reader.readAsDataURL(file);
     });
 
+    const imagePanel = document.getElementById("imagePanel");
+    const imageList = document.getElementById("imageList");
+    const addImageBtn = document.getElementById("addImageBtn");
+    //const addImageInput = document.getElementById("addImageInput");
+
+    // Render the image list with thumbnails, rename, and remove
+    function renderImageList() {
+      imageList.innerHTML = "";
+      objectImages.forEach(img => {
+        const li = document.createElement("li");
+        li.style.display = "flex";
+        li.style.alignItems = "center";
+        li.style.marginBottom = "6px";
+        li.innerHTML = `
+          <img src="${img.url}" style="width:36px;height:36px;object-fit:contain;border:1px solid #ccc;margin-right:8px;">
+          <input type="text" value="${img.label}" style="flex:1; margin-right:4px; min-width:0;">
+          <button title="Remove" style="margin-left:2px;">🗑️</button>
+        `;
+        // Rename handler
+        li.querySelector('input[type="text"]').addEventListener("change", (e) => {
+          img.label = e.target.value;
+          renderImageSelect();
+          renderKeyframeTable();
+        });
+        // Remove handler
+        li.querySelector('button').onclick = () => {
+          if (objectImages.length === 1) {
+            alert("At least one image is required.");
+            return;
+          }
+          // Remove all keyframes using this imageId
+          for (let i = keyframes.length - 1; i >= 0; i--) {
+            if (keyframes[i].imageId === img.id) keyframes.splice(i, 1);
+          }
+          // Remove image
+          objectImages = objectImages.filter(i => i.id !== img.id);
+          // If current selection is gone, pick first
+          if (!objectImages.find(i => i.id === currentState.imageId)) {
+            currentState.imageId = objectImages[0].id;
+          }
+          renderImageSelect();
+          renderImageList();
+          renderKeyframeTable();
+          applyState(currentState);
+        };
+        // Highlight if selected
+        if (img.id === currentState.imageId) {
+          li.style.background = "#e0f0ff";
+        }
+        // Click thumbnail to select
+        li.querySelector('img').onclick = () => {
+          currentState.imageId = img.id;
+          imageSelect.value = img.id;
+          applyState(currentState);
+        };
+        imageList.appendChild(li);
+      });
+    }
+
+    // Add image button
+    addImageBtn.onclick = () => addImageInput.click();
+    addImageInput.onchange = e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const label = prompt("Enter image label/description:", `Image ${objectImages.length + 1}`) || `Image ${objectImages.length + 1}`;
+        objectImages.push({ id: nextImageId++, label, url: evt.target.result });
+        renderImageSelect();
+        renderImageList();
+      };
+      reader.readAsDataURL(file);
+    };
+
+    // Call this after any image change
+    renderImageList();
   </script>
 </body>
 </html>
