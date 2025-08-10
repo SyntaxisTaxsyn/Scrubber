@@ -107,6 +107,22 @@
       padding: 0;
       margin: 0 0 10px 0;
     }
+
+    #backgroundPanel {
+      position: absolute;
+      right: 280px;
+      top: 60px;
+      width: 240px;
+      background: #f8f8f8;
+      border: 1px solid #ccc;
+      padding: 12px;
+    }
+
+    #backgroundList {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 10px 0;
+    }
   </style>
 </head>
 <body>
@@ -121,7 +137,8 @@
   <br>
 
   <div id="canvas">
-    <div id="object"></div>
+    <div id="background" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;"></div>
+    <div id="object" style="z-index:1;"></div>
   </div>
 
   <div id="controls">
@@ -137,6 +154,7 @@
     <button id="loadBtn">Load</button>
     <input type="file" id="imageInput" accept="image/*" style="display:none;">
     <input type="file" id="loadInput" accept=".json" style="display:none;">
+    <button onclick="addBackgroundKeyframe()">Add Background Keyframe</button>
   </div>
 
   <div id="fields">
@@ -159,6 +177,13 @@
     <button id="addImageBtn" style="width:100%;">Add Image</button>
   </div>
 
+  <div id="backgroundPanel">
+    <h4 style="margin-top:0;">Backgrounds</h4>
+    <ul id="backgroundList" style="list-style:none; padding:0; margin:0 0 10px 0;"></ul>
+    <input type="file" id="addBackgroundInput" accept="image/*" style="display:none;">
+    <button id="addBackgroundBtn" style="width:100%;">Add Background</button>
+  </div>
+
   <table id="keyframeTable">
     <thead>
       <tr>
@@ -176,6 +201,20 @@
     </thead>
     <tbody>
       <!-- Keyframes go here -->
+    </tbody>
+  </table>
+
+  <!-- Add background keyframe table -->
+  <table id="backgroundKeyframeTable">
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Background</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Background keyframes go here -->
     </tbody>
   </table>
 
@@ -200,6 +239,7 @@
 
     const markerTrack = document.getElementById("markerTrack");
     const keyframeTable = document.getElementById("keyframeTable").querySelector("tbody");
+    const backgroundKeyframeTable = document.getElementById("backgroundKeyframeTable").querySelector("tbody");
 
     const imageSelect = document.getElementById("imageSelect");
 
@@ -227,6 +267,19 @@
     };
 
     let selectedKeyframeIndex = null; // <-- add this
+
+    let backgroundImages = [
+      { id: 1, label: "Default BG", url: "/Backgrounds/Default.webp" }
+    ];
+    let nextBackgroundImageId = 2;
+
+    let backgroundKeyframes = [
+      // { time: 0, imageId: 1 }
+    ];
+
+    let currentBackground = {
+      imageId: 1
+    };
 
     function applyState(state) {
       object.style.left = `${state.x}px`;
@@ -329,12 +382,31 @@
       return currentState;
     }
 
+    function getBackgroundAt(time) {
+      if (backgroundKeyframes.length === 0) return currentBackground;
+      if (time <= backgroundKeyframes[0].time) return backgroundKeyframes[0];
+      if (time >= backgroundKeyframes[backgroundKeyframes.length - 1].time) return backgroundKeyframes[backgroundKeyframes.length - 1];
+
+      for (let i = 0; i < backgroundKeyframes.length - 1; i++) {
+        const a = backgroundKeyframes[i];
+        const b = backgroundKeyframes[i + 1];
+        if (time >= a.time && time <= b.time) {
+          const progress = (time - a.time) / (b.time - a.time);
+          return interpolate(a, b, progress);
+        }
+      }
+      return currentBackground;
+    }
+
     function updateFromTimeline() {
       currentTime = parseFloat(timeline.value);
       const state = getStateAt(currentTime);
-      selectedKeyframeIndex = null; // Deselect keyframe
+      const bgState = getBackgroundAt(currentTime);
+      selectedKeyframeIndex = null;
       applyState(state);
+      applyBackground(bgState);
       renderKeyframeTable();
+      renderBackgroundKeyframeTable();
     }
 
     timeline.addEventListener("input", updateFromTimeline);
@@ -486,6 +558,40 @@
             renderMarkers();
             renderKeyframeTable();
           }
+        });
+      });
+    }
+
+    function renderBackgroundKeyframeTable() {
+      backgroundKeyframeTable.innerHTML = "";
+      backgroundKeyframes.forEach((bkf, index) => {
+        const bg = backgroundImages.find(i => i.id === bkf.imageId);
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${bkf.time}</td>
+          <td>${bg ? bg.label : ""}</td>
+          <td>
+            <button class="deleteBgKeyframeBtn" data-index="${index}" title="Delete" style="font-family:'Segoe UI Symbol','Segoe UI Emoji',sans-serif;">🗑️</button>
+          </td>
+        `;
+        row.addEventListener("click", (e) => {
+          if (e.target.tagName === "BUTTON") return;
+          // Select and apply this background keyframe
+          currentBackground.imageId = bkf.imageId;
+          timeline.value = bkf.time;
+          applyBackground(bkf);
+          renderBackgroundKeyframeTable();
+        });
+        backgroundKeyframeTable.appendChild(row);
+      });
+
+      // Attach delete handlers
+      backgroundKeyframeTable.querySelectorAll(".deleteBgKeyframeBtn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const idx = parseInt(btn.getAttribute("data-index"));
+          backgroundKeyframes.splice(idx, 1);
+          renderBackgroundKeyframeTable();
         });
       });
     }
@@ -666,7 +772,10 @@
         projectName,
         objectImages,
         keyframes,
-        currentState
+        currentState,
+        backgroundImages,         // <-- add this
+        backgroundKeyframes,      // <-- add this
+        currentBackground         // <-- add this
       };
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -692,25 +801,118 @@
       reader.onload = function(evt) {
         try {
           const data = JSON.parse(evt.target.result);
-          // Restore project name, images, keyframes, and state
           projectNameInput.value = data.projectName || "My Animation Project";
           objectImages = data.objectImages || [];
           keyframes.length = 0;
           (data.keyframes || []).forEach(kf => keyframes.push(kf));
           Object.assign(currentState, data.currentState || {});
-          // Update nextImageId
+          // Restore backgrounds
+          backgroundImages = data.backgroundImages || [{ id: 1, label: "Default BG", url: "" }];
+          backgroundKeyframes = data.backgroundKeyframes || [];
+          currentBackground = data.currentBackground || { imageId: 1 };
+          // Update next IDs
           nextImageId = objectImages.reduce((max, img) => Math.max(max, img.id), 0) + 1;
+          nextBackgroundImageId = backgroundImages.reduce((max, img) => Math.max(max, img.id), 0) + 1;
           renderImageSelect();
           renderImageList();
           renderMarkers();
           renderKeyframeTable();
+          renderBackgroundList();
+          renderBackgroundKeyframeTable();
           applyState(currentState);
+          applyBackground(currentBackground);
         } catch (err) {
           alert("Failed to load project: " + err.message);
         }
       };
       reader.readAsText(file);
     });
+
+    const backgroundPanel = document.getElementById("backgroundPanel");
+    const backgroundList = document.getElementById("backgroundList");
+    const addBackgroundBtn = document.getElementById("addBackgroundBtn");
+    const addBackgroundInput = document.getElementById("addBackgroundInput");
+
+    function renderBackgroundList() {
+      backgroundList.innerHTML = "";
+      backgroundImages.forEach(bg => {
+        const li = document.createElement("li");
+        li.style.display = "flex";
+        li.style.alignItems = "center";
+        li.style.marginBottom = "6px";
+        li.innerHTML = `
+          <img src="${bg.url}" style="width:36px;height:36px;object-fit:contain;border:1px solid #ccc;margin-right:8px;">
+          <input type="text" value="${bg.label}" style="flex:1; margin-right:4px; min-width:0;">
+          <button title="Remove" style="margin-left:2px;">🗑️</button>
+        `;
+        // Rename handler
+        li.querySelector('input[type="text"]').addEventListener("change", (e) => {
+          bg.label = e.target.value;
+          renderBackgroundList();
+          renderBackgroundKeyframeTable();
+        });
+        // Remove handler
+        li.querySelector('button').onclick = () => {
+          if (backgroundImages.length === 1) {
+            alert("At least one background is required.");
+            return;
+          }
+          // Remove all background keyframes using this imageId
+          for (let i = backgroundKeyframes.length - 1; i >= 0; i--) {
+            if (backgroundKeyframes[i].imageId === bg.id) backgroundKeyframes.splice(i, 1);
+          }
+          backgroundImages = backgroundImages.filter(i => i.id !== bg.id);
+          if (!backgroundImages.find(i => i.id === currentBackground.imageId)) {
+            currentBackground.imageId = backgroundImages[0].id;
+          }
+          renderBackgroundList();
+          renderBackgroundKeyframeTable();
+          applyBackground(currentBackground);
+        };
+        // Highlight if selected
+        if (bg.id === currentBackground.imageId) {
+          li.style.background = "#e0f0ff";
+        }
+        // Click thumbnail to select
+        li.querySelector('img').onclick = () => {
+          currentBackground.imageId = bg.id;
+          applyBackground(currentBackground);
+        };
+        backgroundList.appendChild(li);
+      });
+    }
+
+    addBackgroundBtn.onclick = () => addBackgroundInput.click();
+    addBackgroundInput.onchange = e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const label = prompt("Enter background label/description:", `Background ${backgroundImages.length + 1}`) || `Background ${backgroundImages.length + 1}`;
+        backgroundImages.push({ id: nextBackgroundImageId++, label, url: evt.target.result });
+        renderBackgroundList();
+        renderBackgroundKeyframeTable();
+      };
+      reader.readAsDataURL(file);
+    };
+
+    renderBackgroundList();
+
+    const backgroundDiv = document.getElementById("background");
+
+    function applyBackground(state) {
+      const bg = backgroundImages.find(i => i.id === state.imageId) || backgroundImages[0];
+      backgroundDiv.style.backgroundImage = bg.url ? `url('${bg.url}')` : "";
+      backgroundDiv.style.backgroundSize = "cover";
+      backgroundDiv.style.backgroundPosition = "center";
+    }
+
+    function addBackgroundKeyframe() {
+      const time = parseFloat(timeline.value);
+      backgroundKeyframes.push({ time, imageId: currentBackground.imageId });
+      backgroundKeyframes.sort((a, b) => a.time - b.time);
+      renderBackgroundKeyframeTable();
+    }
   </script>
 </body>
 </html>
