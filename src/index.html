@@ -171,6 +171,7 @@
         <th>Visible</th>
         <th>Mirror</th>
         <th>Image</th>
+        <th>Action</th>
       </tr>
     </thead>
     <tbody>
@@ -402,12 +403,53 @@
           <td>${kf.visible ? "Yes" : "No"}</td>
           <td>${kf.mirror ? "Yes" : "No"}</td>
           <td>${img ? img.label : ""}</td>
+          <td><button class="deleteKeyframeBtn" data-index="${index}" title="Delete" style="font-family:'Segoe UI Symbol','Segoe UI Emoji',sans-serif;">🗑️</button></td>
+          <td>
+            <button class="moveUpBtn" data-index="${index}" title="Move Up">▲</button>
+            <button class="moveDownBtn" data-index="${index}" title="Move Down">▼</button>
+          </td>
         `;
         row.addEventListener("click", () => {
           timeline.value = kf.time;
           updateFromTimeline();
         });
         keyframeTable.appendChild(row);
+      });
+
+      // Attach delete handlers
+      keyframeTable.querySelectorAll(".deleteKeyframeBtn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const idx = parseInt(btn.getAttribute("data-index"));
+          keyframes.splice(idx, 1);
+          renderMarkers();
+          renderKeyframeTable();
+        });
+      });
+      keyframeTable.querySelectorAll(".moveUpBtn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const idx = parseInt(btn.getAttribute("data-index"));
+          if (idx > 0) {
+            // Swap times
+            [keyframes[idx].time, keyframes[idx-1].time] = [keyframes[idx-1].time, keyframes[idx].time];
+            keyframes.sort((a, b) => a.time - b.time);
+            renderMarkers();
+            renderKeyframeTable();
+          }
+        });
+      });
+      keyframeTable.querySelectorAll(".moveDownBtn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const idx = parseInt(btn.getAttribute("data-index"));
+          if (idx < keyframes.length - 1) {
+            [keyframes[idx].time, keyframes[idx+1].time] = [keyframes[idx+1].time, keyframes[idx].time];
+            keyframes.sort((a, b) => a.time - b.time);
+            renderMarkers();
+            renderKeyframeTable();
+          }
+        });
       });
     }
 
