@@ -226,6 +226,8 @@
       imageId: 1 // <-- add this
     };
 
+    let selectedKeyframeIndex = null; // <-- add this
+
     function applyState(state) {
       object.style.left = `${state.x}px`;
       object.style.top = `${state.y}px`;
@@ -250,15 +252,32 @@
     }
 
     function readInputsToState() {
-      currentState.x = parseFloat(inputX.value);
-      currentState.y = parseFloat(inputY.value);
-      currentState.rotation = parseFloat(inputRotation.value);
-      currentState.size = parseFloat(inputSize.value);
-      currentState.opacity = parseFloat(inputOpacity.value) / 100;
-      currentState.visible = inputVisible.checked;
-      currentState.mirror = inputMirror.checked;
-      currentState.imageId = parseInt(imageSelect.value);
-      applyState(currentState);
+      if (selectedKeyframeIndex !== null && keyframes[selectedKeyframeIndex]) {
+        // Edit the selected keyframe
+        const kf = keyframes[selectedKeyframeIndex];
+        kf.x = parseFloat(inputX.value);
+        kf.y = parseFloat(inputY.value);
+        kf.rotation = parseFloat(inputRotation.value);
+        kf.size = parseFloat(inputSize.value);
+        kf.opacity = parseFloat(inputOpacity.value) / 100;
+        kf.visible = inputVisible.checked;
+        kf.mirror = inputMirror.checked;
+        kf.imageId = parseInt(imageSelect.value);
+        applyState(kf);
+        renderKeyframeTable();
+        renderMarkers();
+      } else {
+        // Edit the current state (no keyframe selected)
+        currentState.x = parseFloat(inputX.value);
+        currentState.y = parseFloat(inputY.value);
+        currentState.rotation = parseFloat(inputRotation.value);
+        currentState.size = parseFloat(inputSize.value);
+        currentState.opacity = parseFloat(inputOpacity.value) / 100;
+        currentState.visible = inputVisible.checked;
+        currentState.mirror = inputMirror.checked;
+        currentState.imageId = parseInt(imageSelect.value);
+        applyState(currentState);
+      }
     }
 
     inputX.addEventListener("input", readInputsToState);
@@ -313,7 +332,9 @@
     function updateFromTimeline() {
       currentTime = parseFloat(timeline.value);
       const state = getStateAt(currentTime);
+      selectedKeyframeIndex = null; // Deselect keyframe
       applyState(state);
+      renderKeyframeTable();
     }
 
     timeline.addEventListener("input", updateFromTimeline);
@@ -409,9 +430,25 @@
             <button class="moveDownBtn" data-index="${index}" title="Move Down">▼</button>
           </td>
         `;
-        row.addEventListener("click", () => {
+        if (selectedKeyframeIndex === index) {
+          row.style.backgroundColor = "#ffeeba";
+        }
+        row.addEventListener("click", (e) => {
+          // Prevent row click when clicking a button
+          if (e.target.tagName === "BUTTON") return;
+          selectedKeyframeIndex = index;
+          applyState(kf);
+          // Update input fields to match keyframe
+          inputX.value = Math.round(kf.x);
+          inputY.value = Math.round(kf.y);
+          inputRotation.value = Math.round(kf.rotation);
+          inputSize.value = Math.round(kf.size);
+          inputOpacity.value = Math.round(kf.opacity * 100);
+          inputVisible.checked = kf.visible;
+          inputMirror.checked = kf.mirror;
+          imageSelect.value = kf.imageId;
           timeline.value = kf.time;
-          updateFromTimeline();
+          renderKeyframeTable();
         });
         keyframeTable.appendChild(row);
       });
