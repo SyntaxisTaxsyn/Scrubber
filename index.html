@@ -1,0 +1,918 @@
+<!DOCTYPE html> 
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Touch Animation Editor</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 20px;
+    }
+
+    #canvas {
+      position: relative;
+      width: 600px;
+      height: 400px;
+      border: 1px solid #ccc;
+      margin-bottom: 20px;
+      background-color: #f9f9f9;
+    }
+
+    #object {
+      position: absolute;
+      background-image: url('/your-repo-name/assets/gupxCropped-BLZGRQN-.png'); /* Update with the actual file path */
+      background-size: contain;
+      background-repeat: no-repeat;
+      background-position: center;
+      transform-origin: center;
+      touch-action: none;
+    }
+
+    #controls, #fields {
+      margin-top: 10px;
+    }
+
+    button {
+      margin-right: 10px;
+      padding: 6px 12px;
+    }
+
+    input[type="range"] {
+      width: 300px;
+      vertical-align: middle;
+    }
+
+    input[type="number"] {
+      width: 60px;
+      margin-right: 10px;
+    }
+
+    label {
+      margin-right: 5px;
+    }
+
+    #timelineWrapper {
+      position: relative;
+      display: inline-block;
+    }
+
+    #markerTrack {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      height: 8px;
+      width: 300px;
+      transform: translateY(-50%);
+      pointer-events: none;
+    }
+
+    .marker {
+      position: absolute;
+      top: 0;
+      width: 2px;
+      height: 100%;
+      background-color: blue;
+    }
+
+    #keyframeTable {
+      margin-top: 20px;
+      border-collapse: collapse;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    #keyframeTable th, #keyframeTable td {
+      border: 1px solid #ccc;
+      padding: 6px 10px;
+      text-align: center;
+    }
+
+    #keyframeTable tr:hover {
+      background-color: #f0f8ff;
+      cursor: pointer;
+    }
+
+    #imagePanel {
+      position: absolute;
+      right: 20px;
+      top: 60px;
+      width: 240px;
+      background: #f8f8f8;
+      border: 1px solid #ccc;
+      padding: 12px;
+    }
+
+    #imageList {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 10px 0;
+    }
+
+    #backgroundPanel {
+      position: absolute;
+      right: 280px;
+      top: 60px;
+      width: 240px;
+      background: #f8f8f8;
+      border: 1px solid #ccc;
+      padding: 12px;
+    }
+
+    #backgroundList {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 10px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <h2>Touch Animation Editor</h2>
+
+  <label>
+    Project Name:
+    <input type="text" id="projectName" value="My Animation Project" style="margin-bottom:10px; width:220px;">
+  </label>
+  
+  <br>
+
+  <div id="canvas">
+    <div id="background" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;"></div>
+    <div id="object" style="z-index:1;"></div>
+  </div>
+
+  <div id="controls">
+    <div id="timelineWrapper">
+      <input type="range" id="timeline" min="0" max="100" value="0">
+      <div id="markerTrack"></div>
+    </div>
+    <button id="addKeyframe">Add Keyframe</button>
+    <button id="togglePlay">Play</button>
+    <button id="changeImageBtn">Change Image</button>
+    <button id="resetBtn">Reset</button>
+    <button id="saveBtn">Save</button>
+    <button id="loadBtn">Load</button>
+    <input type="file" id="imageInput" accept="image/*" style="display:none;">
+    <input type="file" id="loadInput" accept=".json" style="display:none;">
+    <button onclick="addBackgroundKeyframe()">Add Background Keyframe</button>
+  </div>
+
+  <div id="fields">
+    <label>X: <input type="number" id="inputX"></label>
+    <label>Y: <input type="number" id="inputY"></label>
+    <label>Rotation: <input type="number" id="inputRotation"></label>
+    <label>Size: <input type="number" id="inputSize"></label>
+    <label>Opacity: <input type="number" id="inputOpacity" min="0" max="100" step="1"></label>
+    <label>Visible: <input type="checkbox" id="inputVisible"></label>
+    <label>Mirror: <input type="checkbox" id="inputMirror"></label>
+    <label>Image: 
+      <select id="imageSelect"></select>
+    </label>
+  </div>
+
+  <div id="imagePanel">
+    <h4 style="margin-top:0;">Object Images</h4>
+    <ul id="imageList" style="list-style:none; padding:0; margin:0 0 10px 0;"></ul>
+    <input type="file" id="addImageInput" accept="image/*" style="display:none;">
+    <button id="addImageBtn" style="width:100%;">Add Image</button>
+  </div>
+
+  <div id="backgroundPanel">
+    <h4 style="margin-top:0;">Backgrounds</h4>
+    <ul id="backgroundList" style="list-style:none; padding:0; margin:0 0 10px 0;"></ul>
+    <input type="file" id="addBackgroundInput" accept="image/*" style="display:none;">
+    <button id="addBackgroundBtn" style="width:100%;">Add Background</button>
+  </div>
+
+  <table id="keyframeTable">
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>X</th>
+        <th>Y</th>
+        <th>Rotation</th>
+        <th>Size</th>
+        <th>Opacity</th>
+        <th>Visible</th>
+        <th>Mirror</th>
+        <th>Image</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Keyframes go here -->
+    </tbody>
+  </table>
+
+  <!-- Add background keyframe table -->
+  <table id="backgroundKeyframeTable">
+    <thead>
+      <tr>
+        <th>Time</th>
+        <th>Background</th>
+        <th>Action</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- Background keyframes go here -->
+    </tbody>
+  </table>
+
+  <script>
+    const object = document.getElementById("object");
+    const timeline = document.getElementById("timeline");
+    const addKeyframeBtn = document.getElementById("addKeyframe");
+    const togglePlayBtn = document.getElementById("togglePlay");
+    const changeImageBtn = document.getElementById("changeImageBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const imageInput = document.getElementById("imageInput");
+    const addImageInput = document.getElementById("addImageInput");
+    const loadInput = document.getElementById("loadInput");
+
+    const inputX = document.getElementById("inputX");
+    const inputY = document.getElementById("inputY");
+    const inputRotation = document.getElementById("inputRotation");
+    const inputSize = document.getElementById("inputSize");
+    const inputOpacity = document.getElementById("inputOpacity");
+    const inputVisible = document.getElementById("inputVisible");
+    const inputMirror = document.getElementById("inputMirror");
+
+    const markerTrack = document.getElementById("markerTrack");
+    const keyframeTable = document.getElementById("keyframeTable").querySelector("tbody");
+    const backgroundKeyframeTable = document.getElementById("backgroundKeyframeTable").querySelector("tbody");
+
+    const imageSelect = document.getElementById("imageSelect");
+
+    // Store images as {id, label, url}
+    let objectImages = [
+      { id: 1, label: "Default", url: "/Images/gupxCropped.png" }
+    ];
+    let nextImageId = 2; // for unique IDs
+
+    let currentTime = 0;
+    let playing = false;
+    let playInterval;
+
+    const keyframes = [];
+
+    let currentState = {
+      x: 100,
+      y: 100,
+      size: 50,
+      rotation: 0,
+      opacity: 1,
+      visible: true,
+      mirror: false,
+      imageId: 1 // <-- add this
+    };
+
+    let selectedKeyframeIndex = null; // <-- add this
+
+    let backgroundImages = [
+      { id: 1, label: "Default BG", url: "/Backgrounds/Default.webp" }
+    ];
+    let nextBackgroundImageId = 2;
+
+    let backgroundKeyframes = [
+      // { time: 0, imageId: 1 }
+    ];
+
+    let currentBackground = {
+      imageId: 1
+    };
+
+    function applyState(state) {
+      object.style.left = `${state.x}px`;
+      object.style.top = `${state.y}px`;
+      object.style.width = `${state.size}px`;
+      object.style.height = `${state.size}px`;
+      object.style.transform = `rotate(${state.rotation}deg) scaleX(${state.mirror ? -1 : 1})`;
+      object.style.opacity = state.opacity;
+      object.style.display = state.visible ? "" : "none";
+      // Set image
+      const img = objectImages.find(i => i.id === state.imageId) || objectImages[0];
+      object.style.backgroundImage = `url('${img.url}')`;
+
+      inputX.value = Math.round(state.x);
+      inputY.value = Math.round(state.y);
+      inputRotation.value = Math.round(state.rotation);
+      inputSize.value = Math.round(state.size);
+      inputOpacity.value = Math.round(state.opacity * 100);
+      inputVisible.checked = state.visible;
+      inputMirror.checked = state.mirror;
+      // Always update the dropdown, fallback to first image if not found
+      imageSelect.value = (objectImages.find(i => i.id === state.imageId) ? state.imageId : objectImages[0].id);
+    }
+
+    function readInputsToState() {
+      if (selectedKeyframeIndex !== null && keyframes[selectedKeyframeIndex]) {
+        // Edit the selected keyframe
+        const kf = keyframes[selectedKeyframeIndex];
+        kf.x = parseFloat(inputX.value);
+        kf.y = parseFloat(inputY.value);
+        kf.rotation = parseFloat(inputRotation.value);
+        kf.size = parseFloat(inputSize.value);
+        kf.opacity = parseFloat(inputOpacity.value) / 100;
+        kf.visible = inputVisible.checked;
+        kf.mirror = inputMirror.checked;
+        kf.imageId = parseInt(imageSelect.value);
+        applyState(kf);
+        renderKeyframeTable();
+        renderMarkers();
+      } else {
+        // Edit the current state (no keyframe selected)
+        currentState.x = parseFloat(inputX.value);
+        currentState.y = parseFloat(inputY.value);
+        currentState.rotation = parseFloat(inputRotation.value);
+        currentState.size = parseFloat(inputSize.value);
+        currentState.opacity = parseFloat(inputOpacity.value) / 100;
+        currentState.visible = inputVisible.checked;
+        currentState.mirror = inputMirror.checked;
+        currentState.imageId = parseInt(imageSelect.value);
+        applyState(currentState);
+      }
+    }
+
+    inputX.addEventListener("input", readInputsToState);
+    inputY.addEventListener("input", readInputsToState);
+    inputRotation.addEventListener("input", readInputsToState);
+    inputSize.addEventListener("input", readInputsToState);
+    inputOpacity.addEventListener("input", readInputsToState);
+    inputVisible.addEventListener("change", readInputsToState);
+    inputMirror.addEventListener("change", readInputsToState); // <-- add this
+    imageSelect.addEventListener("change", readInputsToState);
+
+    addKeyframeBtn.addEventListener("click", () => {
+      const time = parseFloat(timeline.value);
+      const state = { ...currentState, time };
+      keyframes.push(state);
+      keyframes.sort((a, b) => a.time - b.time);
+      renderMarkers();
+      renderKeyframeTable();
+      console.log("Added keyframe:", state);
+    });
+
+    function interpolate(a, b, t) {
+      const lerp = (x, y) => x + (y - x) * t;
+      return {
+        x: lerp(a.x, b.x),
+        y: lerp(a.y, b.y),
+        size: lerp(a.size, b.size),
+        rotation: lerp(a.rotation, b.rotation),
+        opacity: lerp(a.opacity, b.opacity),
+        visible: a.visible,
+        mirror: a.mirror,
+        imageId: a.imageId // step, not interpolated
+      };
+    }
+
+    function getStateAt(time) {
+      if (keyframes.length === 0) return currentState;
+      if (time <= keyframes[0].time) return keyframes[0];
+      if (time >= keyframes[keyframes.length - 1].time) return keyframes[keyframes.length - 1];
+
+      for (let i = 0; i < keyframes.length - 1; i++) {
+        const a = keyframes[i];
+        const b = keyframes[i + 1];
+        if (time >= a.time && time <= b.time) {
+          const progress = (time - a.time) / (b.time - a.time);
+          return interpolate(a, b, progress);
+        }
+      }
+      return currentState;
+    }
+
+    function getBackgroundAt(time) {
+      if (backgroundKeyframes.length === 0) return currentBackground;
+      if (time <= backgroundKeyframes[0].time) return backgroundKeyframes[0];
+      if (time >= backgroundKeyframes[backgroundKeyframes.length - 1].time) return backgroundKeyframes[backgroundKeyframes.length - 1];
+
+      for (let i = 0; i < backgroundKeyframes.length - 1; i++) {
+        const a = backgroundKeyframes[i];
+        const b = backgroundKeyframes[i + 1];
+        if (time >= a.time && time <= b.time) {
+          const progress = (time - a.time) / (b.time - a.time);
+          return interpolate(a, b, progress);
+        }
+      }
+      return currentBackground;
+    }
+
+    function updateFromTimeline() {
+      currentTime = parseFloat(timeline.value);
+      const state = getStateAt(currentTime);
+      const bgState = getBackgroundAt(currentTime);
+      selectedKeyframeIndex = null;
+      applyState(state);
+      applyBackground(bgState);
+      renderKeyframeTable();
+      renderBackgroundKeyframeTable();
+    }
+
+    timeline.addEventListener("input", updateFromTimeline);
+
+    togglePlayBtn.addEventListener("click", () => {
+      playing = !playing;
+      togglePlayBtn.textContent = playing ? "Pause" : "Play";
+
+      if (playing) {
+        playInterval = setInterval(() => {
+          currentTime += 1;
+          if (currentTime > 100) {
+            currentTime = 100;
+            clearInterval(playInterval);
+            playing = false;
+            togglePlayBtn.textContent = "Play";
+          }
+          timeline.value = currentTime;
+          updateFromTimeline();
+        }, 50);
+      } else {
+        clearInterval(playInterval);
+      }
+    });
+
+    changeImageBtn.addEventListener("click", () => {
+      imageInput.click();
+    });
+
+    imageInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const label = prompt("Enter image label/description:", `Image ${objectImages.length + 1}`) || `Image ${objectImages.length + 1}`;
+        objectImages.push({ id: nextImageId++, label, url: evt.target.result });
+        renderImageSelect();
+        renderImageList(); // <-- add this
+      };
+      reader.readAsDataURL(file);
+    });
+
+    resetBtn.addEventListener("click", () => {
+      currentState = {
+        x: 100,
+        y: 100,
+        size: 50,
+        rotation: 0,
+        opacity: 1,
+        visible: true,
+        mirror: false,
+        imageId: 1
+      };
+      keyframes.length = 0;
+      currentTime = 0;
+      timeline.value = 0;
+      playing = false;
+      togglePlayBtn.textContent = "Play";
+      clearInterval(playInterval);
+      applyState(currentState);
+      renderMarkers();
+      renderKeyframeTable();
+    });
+
+    function renderMarkers() {
+      markerTrack.innerHTML = "";
+      keyframes.forEach((kf) => {
+        const marker = document.createElement("div");
+        marker.className = "marker";
+        marker.style.left = `${(kf.time / 100) * 300}px`;
+        markerTrack.appendChild(marker);
+      });
+    }
+
+    function renderKeyframeTable() {
+      keyframeTable.innerHTML = "";
+      keyframes.forEach((kf, index) => {
+        const img = objectImages.find(i => i.id === kf.imageId);
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${kf.time}</td>
+          <td>${Math.round(kf.x)}</td>
+          <td>${Math.round(kf.y)}</td>
+          <td>${Math.round(kf.rotation)}</td>
+          <td>${Math.round(kf.size)}</td>
+          <td>${Math.round(kf.opacity * 100)}</td>
+          <td>${kf.visible ? "Yes" : "No"}</td>
+          <td>${kf.mirror ? "Yes" : "No"}</td>
+          <td>${img ? img.label : ""}</td>
+          <td><button class="deleteKeyframeBtn" data-index="${index}" title="Delete" style="font-family:'Segoe UI Symbol','Segoe UI Emoji',sans-serif;">🗑️</button></td>
+          <td>
+            <button class="moveUpBtn" data-index="${index}" title="Move Up">▲</button>
+            <button class="moveDownBtn" data-index="${index}" title="Move Down">▼</button>
+          </td>
+        `;
+        if (selectedKeyframeIndex === index) {
+          row.style.backgroundColor = "#ffeeba";
+        }
+        row.addEventListener("click", (e) => {
+          // Prevent row click when clicking a button
+          if (e.target.tagName === "BUTTON") return;
+          selectedKeyframeIndex = index;
+          applyState(kf);
+          // Update input fields to match keyframe
+          inputX.value = Math.round(kf.x);
+          inputY.value = Math.round(kf.y);
+          inputRotation.value = Math.round(kf.rotation);
+          inputSize.value = Math.round(kf.size);
+          inputOpacity.value = Math.round(kf.opacity * 100);
+          inputVisible.checked = kf.visible;
+          inputMirror.checked = kf.mirror;
+          imageSelect.value = kf.imageId;
+          timeline.value = kf.time;
+          renderKeyframeTable();
+        });
+        keyframeTable.appendChild(row);
+      });
+
+      // Attach delete handlers
+      keyframeTable.querySelectorAll(".deleteKeyframeBtn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const idx = parseInt(btn.getAttribute("data-index"));
+          keyframes.splice(idx, 1);
+          renderMarkers();
+          renderKeyframeTable();
+        });
+      });
+      keyframeTable.querySelectorAll(".moveUpBtn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const idx = parseInt(btn.getAttribute("data-index"));
+          if (idx > 0) {
+            // Swap times
+            [keyframes[idx].time, keyframes[idx-1].time] = [keyframes[idx-1].time, keyframes[idx].time];
+            keyframes.sort((a, b) => a.time - b.time);
+            renderMarkers();
+            renderKeyframeTable();
+          }
+        });
+      });
+      keyframeTable.querySelectorAll(".moveDownBtn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const idx = parseInt(btn.getAttribute("data-index"));
+          if (idx < keyframes.length - 1) {
+            [keyframes[idx].time, keyframes[idx+1].time] = [keyframes[idx+1].time, keyframes[idx].time];
+            keyframes.sort((a, b) => a.time - b.time);
+            renderMarkers();
+            renderKeyframeTable();
+          }
+        });
+      });
+    }
+
+    function renderBackgroundKeyframeTable() {
+      backgroundKeyframeTable.innerHTML = "";
+      backgroundKeyframes.forEach((bkf, index) => {
+        const bg = backgroundImages.find(i => i.id === bkf.imageId);
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${bkf.time}</td>
+          <td>${bg ? bg.label : ""}</td>
+          <td>
+            <button class="deleteBgKeyframeBtn" data-index="${index}" title="Delete" style="font-family:'Segoe UI Symbol','Segoe UI Emoji',sans-serif;">🗑️</button>
+          </td>
+        `;
+        row.addEventListener("click", (e) => {
+          if (e.target.tagName === "BUTTON") return;
+          // Select and apply this background keyframe
+          currentBackground.imageId = bkf.imageId;
+          timeline.value = bkf.time;
+          applyBackground(bkf);
+          renderBackgroundKeyframeTable();
+        });
+        backgroundKeyframeTable.appendChild(row);
+      });
+
+      // Attach delete handlers
+      backgroundKeyframeTable.querySelectorAll(".deleteBgKeyframeBtn").forEach(btn => {
+        btn.addEventListener("click", (e) => {
+          e.stopPropagation();
+          const idx = parseInt(btn.getAttribute("data-index"));
+          backgroundKeyframes.splice(idx, 1);
+          renderBackgroundKeyframeTable();
+        });
+      });
+    }
+
+    applyState(currentState);
+
+    // Drag logic
+    let isDragging = false;
+    let dragOffset = { x: 0, y: 0 };
+
+    function getTouchPos(evt) {
+      const touch = evt.touches[0];
+      const rect = object.parentElement.getBoundingClientRect();
+      return {
+        x: touch.clientX - rect.left,
+        y: touch.clientY - rect.top
+      };
+    }
+
+    function getMousePos(evt) {
+      const rect = object.parentElement.getBoundingClientRect();
+      return {
+        x: evt.clientX - rect.left,
+        y: evt.clientY - rect.top
+      };
+    }
+
+    object.addEventListener("touchstart", (e) => {
+      e.preventDefault();
+      isDragging = true;
+      const pos = getTouchPos(e);
+      dragOffset.x = pos.x - currentState.x;
+      dragOffset.y = pos.y - currentState.y;
+    });
+
+    object.addEventListener("touchmove", (e) => {
+      if (!isDragging) return;
+      const pos = getTouchPos(e);
+      currentState.x = pos.x - dragOffset.x;
+      currentState.y = pos.y - dragOffset.y;
+      applyState(currentState);
+    });
+
+    object.addEventListener("touchend", () => {
+      isDragging = false;
+    });
+
+    object.addEventListener("mousedown", (e) => {
+      isDragging = true;
+      const pos = getMousePos(e);
+      dragOffset.x = pos.x - currentState.x;
+      dragOffset.y = pos.y - currentState.y;
+    });
+
+    window.addEventListener("mousemove", (e) => {
+      if (!isDragging) return;
+      const pos = getMousePos(e);
+      currentState.x = pos.x - dragOffset.x;
+      currentState.y = pos.y - dragOffset.y;
+      applyState(currentState);
+    });
+
+    window.addEventListener("mouseup", () => {
+      isDragging = false;
+    });
+
+    function renderImageSelect() {
+      imageSelect.innerHTML = "";
+      objectImages.forEach(img => {
+        const opt = document.createElement("option");
+        opt.value = img.id;
+        opt.textContent = img.label;
+        imageSelect.appendChild(opt);
+      });
+    }
+    renderImageSelect();
+
+    imageInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const label = prompt("Enter image label/description:", `Image ${objectImages.length + 1}`) || `Image ${objectImages.length + 1}`;
+        objectImages.push({ id: nextImageId++, label, url: evt.target.result });
+        renderImageSelect();
+        renderImageList();
+      };
+      reader.readAsDataURL(file);
+    });
+
+    const imagePanel = document.getElementById("imagePanel");
+    const imageList = document.getElementById("imageList");
+    const addImageBtn = document.getElementById("addImageBtn");
+    //const addImageInput = document.getElementById("addImageInput");
+
+    // Render the image list with thumbnails, rename, and remove
+    function renderImageList() {
+      imageList.innerHTML = "";
+      objectImages.forEach(img => {
+        const li = document.createElement("li");
+        li.style.display = "flex";
+        li.style.alignItems = "center";
+        li.style.marginBottom = "6px";
+        li.innerHTML = `
+          <img src="${img.url}" style="width:36px;height:36px;object-fit:contain;border:1px solid #ccc;margin-right:8px;">
+          <input type="text" value="${img.label}" style="flex:1; margin-right:4px; min-width:0;">
+          <button title="Remove" style="margin-left:2px;">🗑️</button>
+        `;
+        // Rename handler
+        li.querySelector('input[type="text"]').addEventListener("change", (e) => {
+          img.label = e.target.value;
+          renderImageSelect();
+          renderKeyframeTable();
+        });
+        // Remove handler
+        li.querySelector('button').onclick = () => {
+          if (objectImages.length === 1) {
+            alert("At least one image is required.");
+            return;
+          }
+          // Remove all keyframes using this imageId
+          for (let i = keyframes.length - 1; i >= 0; i--) {
+            if (keyframes[i].imageId === img.id) keyframes.splice(i, 1);
+          }
+          // Remove image
+          objectImages = objectImages.filter(i => i.id !== img.id);
+          // If current selection is gone, pick first
+          if (!objectImages.find(i => i.id === currentState.imageId)) {
+            currentState.imageId = objectImages[0].id;
+          }
+          renderImageSelect();
+          renderImageList();
+          renderKeyframeTable();
+          applyState(currentState);
+        };
+        // Highlight if selected
+        if (img.id === currentState.imageId) {
+          li.style.background = "#e0f0ff";
+        }
+        // Click thumbnail to select
+        li.querySelector('img').onclick = () => {
+          currentState.imageId = img.id;
+          imageSelect.value = img.id;
+          applyState(currentState);
+        };
+        imageList.appendChild(li);
+      });
+    }
+
+    // Add image button
+    addImageBtn.onclick = () => addImageInput.click();
+    addImageInput.onchange = e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const label = prompt("Enter image label/description:", `Image ${objectImages.length + 1}`) || `Image ${objectImages.length + 1}`;
+        objectImages.push({ id: nextImageId++, label, url: evt.target.result });
+        renderImageSelect();
+        renderImageList();
+      };
+      reader.readAsDataURL(file);
+    };
+
+    // Call this after any image change
+    renderImageList();
+
+    // Save and load functionality
+    const saveBtn = document.getElementById("saveBtn");
+    const loadBtn = document.getElementById("loadBtn");
+    //const loadInput = document.getElementById("loadInput");
+
+    const projectNameInput = document.getElementById("projectName");
+
+    saveBtn.addEventListener("click", () => {
+      const projectName = projectNameInput.value.trim() || "animation_project";
+      const data = {
+        projectName,
+        objectImages,
+        keyframes,
+        currentState,
+        backgroundImages,         // <-- add this
+        backgroundKeyframes,      // <-- add this
+        currentBackground         // <-- add this
+      };
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = projectName.replace(/[\\/:*?"<>|]+/g, "_") + ".json";
+      document.body.appendChild(a);
+      a.click();
+      setTimeout(() => {
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      }, 0);
+    });
+
+    loadBtn.addEventListener("click", () => {
+      loadInput.click();
+    });
+
+    loadInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const data = JSON.parse(evt.target.result);
+          projectNameInput.value = data.projectName || "My Animation Project";
+          objectImages = data.objectImages || [];
+          keyframes.length = 0;
+          (data.keyframes || []).forEach(kf => keyframes.push(kf));
+          Object.assign(currentState, data.currentState || {});
+          // Restore backgrounds
+          backgroundImages = data.backgroundImages || [{ id: 1, label: "Default BG", url: "" }];
+          backgroundKeyframes = data.backgroundKeyframes || [];
+          currentBackground = data.currentBackground || { imageId: 1 };
+          // Update next IDs
+          nextImageId = objectImages.reduce((max, img) => Math.max(max, img.id), 0) + 1;
+          nextBackgroundImageId = backgroundImages.reduce((max, img) => Math.max(max, img.id), 0) + 1;
+          renderImageSelect();
+          renderImageList();
+          renderMarkers();
+          renderKeyframeTable();
+          renderBackgroundList();
+          renderBackgroundKeyframeTable();
+          applyState(currentState);
+          applyBackground(currentBackground);
+        } catch (err) {
+          alert("Failed to load project: " + err.message);
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    const backgroundPanel = document.getElementById("backgroundPanel");
+    const backgroundList = document.getElementById("backgroundList");
+    const addBackgroundBtn = document.getElementById("addBackgroundBtn");
+    const addBackgroundInput = document.getElementById("addBackgroundInput");
+
+    function renderBackgroundList() {
+      backgroundList.innerHTML = "";
+      backgroundImages.forEach(bg => {
+        const li = document.createElement("li");
+        li.style.display = "flex";
+        li.style.alignItems = "center";
+        li.style.marginBottom = "6px";
+        li.innerHTML = `
+          <img src="${bg.url}" style="width:36px;height:36px;object-fit:contain;border:1px solid #ccc;margin-right:8px;">
+          <input type="text" value="${bg.label}" style="flex:1; margin-right:4px; min-width:0;">
+          <button title="Remove" style="margin-left:2px;">🗑️</button>
+        `;
+        // Rename handler
+        li.querySelector('input[type="text"]').addEventListener("change", (e) => {
+          bg.label = e.target.value;
+          renderBackgroundList();
+          renderBackgroundKeyframeTable();
+        });
+        // Remove handler
+        li.querySelector('button').onclick = () => {
+          if (backgroundImages.length === 1) {
+            alert("At least one background is required.");
+            return;
+          }
+          // Remove all background keyframes using this imageId
+          for (let i = backgroundKeyframes.length - 1; i >= 0; i--) {
+            if (backgroundKeyframes[i].imageId === bg.id) backgroundKeyframes.splice(i, 1);
+          }
+          backgroundImages = backgroundImages.filter(i => i.id !== bg.id);
+          if (!backgroundImages.find(i => i.id === currentBackground.imageId)) {
+            currentBackground.imageId = backgroundImages[0].id;
+          }
+          renderBackgroundList();
+          renderBackgroundKeyframeTable();
+          applyBackground(currentBackground);
+        };
+        // Highlight if selected
+        if (bg.id === currentBackground.imageId) {
+          li.style.background = "#e0f0ff";
+        }
+        // Click thumbnail to select
+        li.querySelector('img').onclick = () => {
+          currentBackground.imageId = bg.id;
+          applyBackground(currentBackground);
+        };
+        backgroundList.appendChild(li);
+      });
+    }
+
+    addBackgroundBtn.onclick = () => addBackgroundInput.click();
+    addBackgroundInput.onchange = e => {
+      const file = e.target.files[0];
+      if (!file) return;
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        const label = prompt("Enter background label/description:", `Background ${backgroundImages.length + 1}`) || `Background ${backgroundImages.length + 1}`;
+        backgroundImages.push({ id: nextBackgroundImageId++, label, url: evt.target.result });
+        renderBackgroundList();
+        renderBackgroundKeyframeTable();
+      };
+      reader.readAsDataURL(file);
+    };
+
+    renderBackgroundList();
+
+    const backgroundDiv = document.getElementById("background");
+
+    function applyBackground(state) {
+      const bg = backgroundImages.find(i => i.id === state.imageId) || backgroundImages[0];
+      backgroundDiv.style.backgroundImage = bg.url ? `url('${bg.url}')` : "";
+      backgroundDiv.style.backgroundSize = "cover";
+      backgroundDiv.style.backgroundPosition = "center";
+    }
+
+    function addBackgroundKeyframe() {
+      const time = parseFloat(timeline.value);
+      backgroundKeyframes.push({ time, imageId: currentBackground.imageId });
+      backgroundKeyframes.sort((a, b) => a.time - b.time);
+      renderBackgroundKeyframeTable();
+    }
+  </script>
+</body>
+</html>
