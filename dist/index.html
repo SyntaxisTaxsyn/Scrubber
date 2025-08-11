@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Touch Animation Editor</title>
+  <title>Scrubber Project Editor</title>
   <style>
     body {
       font-family: sans-serif;
@@ -20,7 +20,7 @@
 
     #object {
       position: absolute;
-      background-image: url('/your-repo-name/assets/gupxCropped-BLZGRQN-.png'); /* Update with the actual file path */
+      background-image: url('/scrubber/assets/gupxCropped-BLZGRQN-.png'); /* Update with the actual file path */
       background-size: contain;
       background-repeat: no-repeat;
       background-position: center;
@@ -127,11 +127,11 @@
 </head>
 <body>
 
-  <h2>Touch Animation Editor</h2>
+  <h2>Scrubber Project Editor</h2>
 
   <label>
     Project Name:
-    <input type="text" id="projectName" value="My Animation Project" style="margin-bottom:10px; width:220px;">
+    <input type="text" id="projectName" value="My Scrubber Project" style="margin-bottom:10px; width:220px;">
   </label>
   
   <br>
@@ -245,7 +245,7 @@
 
     // Store images as {id, label, url}
     let objectImages = [
-      { id: 1, label: "Default", url: "/Images/gupxCropped.png" }
+      { id: 1, label: "Default", url: "Images/gupxCropped.png" }
     ];
     let nextImageId = 2; // for unique IDs
 
@@ -269,7 +269,7 @@
     let selectedKeyframeIndex = null; // <-- add this
 
     let backgroundImages = [
-      { id: 1, label: "Default BG", url: "/Backgrounds/Default.webp" }
+      { id: 1, label: "Default BG", url: "Backgrounds/Default.webp" }
     ];
     let nextBackgroundImageId = 2;
 
@@ -801,7 +801,7 @@
       reader.onload = function(evt) {
         try {
           const data = JSON.parse(evt.target.result);
-          projectNameInput.value = data.projectName || "My Animation Project";
+          projectNameInput.value = data.projectName || "My Scrubber Project";
           objectImages = data.objectImages || [];
           keyframes.length = 0;
           (data.keyframes || []).forEach(kf => keyframes.push(kf));
