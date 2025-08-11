@@ -6,4 +6,5 @@ export default defineConfig({
     outDir: '../dist',
     emptyOutDir: true,
   },
+  base: '/scrubber/', // Replace with your repo name
 });
