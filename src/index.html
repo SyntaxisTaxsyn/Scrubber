@@ -127,7 +127,7 @@
 </head>
 <body>
 
-  <h2>Scrubber Project Editor</h2>
+  <h2>Scrubber Project Editor 2</h2>
 
   <label>
     Project Name:
@@ -184,6 +184,12 @@
     <button id="addBackgroundBtn" style="width:100%;">Add Background</button>
   </div>
 
+  <div id="objectListPanel">
+    <h4 style="margin-top:0;">Objects</h4>
+    <ul id="objectList" style="list-style:none; padding:0; margin:0 0 10px 0;"></ul>
+    <button id="addObjectBtn" style="width:100%;">Add Object</button>
+  </div>
+
   <table id="keyframeTable">
     <thead>
       <tr>
@@ -218,7 +224,54 @@
     </tbody>
   </table>
 
+  <label style="margin-left:10px;">
+    <input type="checkbox" id="showAllObjectsCheckbox">
+    Show all objects when scrubbing
+  </label>
+
   <script>
+    class AnimationObject {
+      constructor({
+        id,
+        name,
+        x = 100,
+        y = 100,
+        size = 50,
+        rotation = 0,
+        opacity = 1,
+        visible = true,
+        mirror = false,
+        imageId = 1,
+        keyframes = [],
+        images = [{ id: 1, label: "Default", url: "" }]
+      }) {
+        this.id = id;
+        this.name = name;
+        this.x = x;
+        this.y = y;
+        this.size = size;
+        this.rotation = rotation;
+        this.opacity = opacity;
+        this.visible = visible;
+        this.mirror = mirror;
+        this.imageId = imageId;
+        this.keyframes = keyframes; // [{...}]
+        this.images = images;       // [{id, label, url}]
+      }
+      getState() {
+        return {
+          x: this.x,
+          y: this.y,
+          size: this.size,
+          rotation: this.rotation,
+          opacity: this.opacity,
+          visible: this.visible,
+          mirror: this.mirror,
+          imageId: this.imageId
+        };
+      }
+    }
+
     const object = document.getElementById("object");
     const timeline = document.getElementById("timeline");
     const addKeyframeBtn = document.getElementById("addKeyframe");
