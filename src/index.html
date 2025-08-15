@@ -127,7 +127,7 @@
 </head>
 <body>
 
-  <h2>Scrubber Project Editor 2</h2>
+  <h2>Scrubber Project Editor</h2>
 
   <label>
     Project Name:
@@ -295,6 +295,27 @@
     const backgroundKeyframeTable = document.getElementById("backgroundKeyframeTable").querySelector("tbody");
 
     const imageSelect = document.getElementById("imageSelect");
+
+    const animationObjects = [
+      new AnimationObject({
+        id: 1,
+        name: "Object 1",
+        x: 100,
+        y: 100,
+        size: 50,
+        rotation: 0,
+        opacity: 1,
+        visible: true,
+        mirror: false,
+        imageId: 1,
+        keyframes: [],
+        images: [
+          { id: 1, label: "Default", url: "Images/gupxCropped.png" }
+        ]
+      })
+    ];
+
+    let selectedObject = 0; // Index of the currently selected object, we use this to track which object is in use in the array
 
     // Store images as {id, label, url}
     let objectImages = [
