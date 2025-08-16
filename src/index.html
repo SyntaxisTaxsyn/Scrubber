@@ -379,9 +379,9 @@
     }
 
     function readInputsToState() {
-      if (selectedKeyframeIndex !== null && keyframes[selectedKeyframeIndex]) {
+      if (selectedKeyframeIndex !== null && animationObjects[selectedObject].keyframes[selectedKeyframeIndex]) {
         // Edit the selected keyframe
-        const kf = keyframes[selectedKeyframeIndex];
+        const kf = animationObjects[selectedObject].keyframes[selectedKeyframeIndex];
         kf.x = parseFloat(inputX.value);
         kf.y = parseFloat(inputY.value);
         kf.rotation = parseFloat(inputRotation.value);
@@ -419,8 +419,8 @@
     addKeyframeBtn.addEventListener("click", () => {
       const time = parseFloat(timeline.value);
       const state = { ...currentState, time };
-      keyframes.push(state);
-      keyframes.sort((a, b) => a.time - b.time);
+      animationObjects[selectedObject].keyframes.push(state);
+      animationObjects[selectedObject].keyframes.sort((a, b) => a.time - b.time);
       renderMarkers();
       renderKeyframeTable();
       console.log("Added keyframe:", state);
@@ -441,13 +441,14 @@
     }
 
     function getStateAt(time) {
-      if (keyframes.length === 0) return currentState;
-      if (time <= keyframes[0].time) return keyframes[0];
-      if (time >= keyframes[keyframes.length - 1].time) return keyframes[keyframes.length - 1];
+      let kfs = animationObjects[selectedObject].keyframes;
+      if (kfs.length === 0) return currentState;
+      if (time <= kfs[0].time) return kfs[0];
+      if (time >= kfs[kfs.length - 1].time) return kfs[kfs.length - 1];
 
-      for (let i = 0; i < keyframes.length - 1; i++) {
-        const a = keyframes[i];
-        const b = keyframes[i + 1];
+      for (let i = 0; i < kfs.length - 1; i++) {
+        const a = kfs[i];
+        const b = kfs[i + 1];
         if (time >= a.time && time <= b.time) {
           const progress = (time - a.time) / (b.time - a.time);
           return interpolate(a, b, progress);
@@ -534,7 +535,7 @@
         mirror: false,
         imageId: 1
       };
-      keyframes.length = 0;
+      animationObjects[selectedObject].keyframes.length = 0;
       currentTime = 0;
       timeline.value = 0;
       playing = false;
@@ -547,7 +548,7 @@
 
     function renderMarkers() {
       markerTrack.innerHTML = "";
-      keyframes.forEach((kf) => {
+      animationObjects[selectedObject].keyframes.forEach((kf) => {
         const marker = document.createElement("div");
         marker.className = "marker";
         marker.style.left = `${(kf.time / 100) * 300}px`;
@@ -557,7 +558,7 @@
 
     function renderKeyframeTable() {
       keyframeTable.innerHTML = "";
-      keyframes.forEach((kf, index) => {
+      animationObjects[selectedObject].keyframes.forEach((kf, index) => {
         const img = objectImages.find(i => i.id === kf.imageId);
         const row = document.createElement("tr");
         row.innerHTML = `
@@ -604,7 +605,7 @@
         btn.addEventListener("click", (e) => {
           e.stopPropagation();
           const idx = parseInt(btn.getAttribute("data-index"));
-          keyframes.splice(idx, 1);
+          animationObjects[selectedObject].keyframes.splice(idx, 1);
           renderMarkers();
           renderKeyframeTable();
         });
@@ -615,8 +616,8 @@
           const idx = parseInt(btn.getAttribute("data-index"));
           if (idx > 0) {
             // Swap times
-            [keyframes[idx].time, keyframes[idx-1].time] = [keyframes[idx-1].time, keyframes[idx].time];
-            keyframes.sort((a, b) => a.time - b.time);
+            [animationObjects[selectedObject].keyframes[idx].time, animationObjects[selectedObject].keyframes[idx-1].time] = [animationObjects[selectedObject].keyframes[idx-1].time, animationObjects[selectedObject].keyframes[idx].time];
+            animationObjects[selectedObject].keyframes.sort((a, b) => a.time - b.time);
             renderMarkers();
             renderKeyframeTable();
           }
@@ -626,9 +627,9 @@
         btn.addEventListener("click", (e) => {
           e.stopPropagation();
           const idx = parseInt(btn.getAttribute("data-index"));
-          if (idx < keyframes.length - 1) {
-            [keyframes[idx].time, keyframes[idx+1].time] = [keyframes[idx+1].time, keyframes[idx].time];
-            keyframes.sort((a, b) => a.time - b.time);
+          if (idx < animationObjects[selectedObject].keyframes.length - 1) {
+            [animationObjects[selectedObject].keyframes[idx].time, animationObjects[selectedObject].keyframes[idx+1].time] = [animationObjects[selectedObject].keyframes[idx+1].time, animationObjects[selectedObject].keyframes[idx].time];
+            animationObjects[selectedObject].keyframes.sort((a, b) => a.time - b.time);
             renderMarkers();
             renderKeyframeTable();
           }
@@ -787,8 +788,8 @@
             return;
           }
           // Remove all keyframes using this imageId
-          for (let i = keyframes.length - 1; i >= 0; i--) {
-            if (keyframes[i].imageId === img.id) keyframes.splice(i, 1);
+          for (let i = animationObjects[selectedObject].keyframes.length - 1; i >= 0; i--) {
+            if (animationObjects[selectedObject].keyframes[i].imageId === img.id) animationObjects[selectedObject].keyframes.splice(i, 1);
           }
           // Remove image
           objectImages = objectImages.filter(i => i.id !== img.id);
@@ -849,7 +850,8 @@
         currentState,
         backgroundImages,         // <-- add this
         backgroundKeyframes,      // <-- add this
-        currentBackground         // <-- add this
+        currentBackground,
+        animationObjects         // <-- add this
       };
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -884,6 +886,20 @@
           backgroundImages = data.backgroundImages || [{ id: 1, label: "Default BG", url: "" }];
           backgroundKeyframes = data.backgroundKeyframes || [];
           currentBackground = data.currentBackground || { imageId: 1 };
+
+          // Restore animationObjects
+          if (Array.isArray(data.animationObjects)) {
+            animationObjects.length = 0;
+            data.animationObjects.forEach(objData => {
+              animationObjects.push(new AnimationObject(objData));
+            });
+            selectedObject = 0;
+            // Optionally restore currentState from the first object
+            if (animationObjects.length > 0) {
+              Object.assign(currentState, animationObjects[0].getState());
+            }
+          }
+
           // Update next IDs
           nextImageId = objectImages.reduce((max, img) => Math.max(max, img.id), 0) + 1;
           nextBackgroundImageId = backgroundImages.reduce((max, img) => Math.max(max, img.id), 0) + 1;
