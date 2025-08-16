@@ -364,7 +364,7 @@
       object.style.opacity = state.opacity;
       object.style.display = state.visible ? "" : "none";
       // Set image
-      const img = objectImages.find(i => i.id === state.imageId) || objectImages[0];
+      const img = animationObjects[selectedObject].images.find(i => i.id === state.imageId) || animationObjects[selectedObject].images[0];
       object.style.backgroundImage = `url('${img.url}')`;
 
       inputX.value = Math.round(state.x);
@@ -375,7 +375,7 @@
       inputVisible.checked = state.visible;
       inputMirror.checked = state.mirror;
       // Always update the dropdown, fallback to first image if not found
-      imageSelect.value = (objectImages.find(i => i.id === state.imageId) ? state.imageId : objectImages[0].id);
+      imageSelect.value = (animationObjects[selectedObject].images.find(i => i.id === state.imageId) ? state.imageId : animationObjects[selectedObject].images[0].id);
     }
 
     function readInputsToState() {
@@ -516,8 +516,8 @@
       if (!file) return;
       const reader = new FileReader();
       reader.onload = function(evt) {
-        const label = prompt("Enter image label/description:", `Image ${objectImages.length + 1}`) || `Image ${objectImages.length + 1}`;
-        objectImages.push({ id: nextImageId++, label, url: evt.target.result });
+        const label = prompt("Enter image label/description:", `Image ${animationObjects[selectedObject].images.length + 1}`) || `Image ${animationObjects[selectedObject].images.length + 1}`;
+        animationObjects[selectedObject].images.push({ id: nextImageId++, label, url: evt.target.result });
         renderImageSelect();
         renderImageList(); // <-- add this
       };
@@ -559,7 +559,7 @@
     function renderKeyframeTable() {
       keyframeTable.innerHTML = "";
       animationObjects[selectedObject].keyframes.forEach((kf, index) => {
-        const img = objectImages.find(i => i.id === kf.imageId);
+        const img = animationObjects[selectedObject].images.find(i => i.id === kf.imageId);
         const row = document.createElement("tr");
         row.innerHTML = `
           <td>${kf.time}</td>
@@ -735,7 +735,7 @@
 
     function renderImageSelect() {
       imageSelect.innerHTML = "";
-      objectImages.forEach(img => {
+      animationObjects[selectedObject].images.forEach(img => {
         const opt = document.createElement("option");
         opt.value = img.id;
         opt.textContent = img.label;
@@ -749,8 +749,8 @@
       if (!file) return;
       const reader = new FileReader();
       reader.onload = function(evt) {
-        const label = prompt("Enter image label/description:", `Image ${objectImages.length + 1}`) || `Image ${objectImages.length + 1}`;
-        objectImages.push({ id: nextImageId++, label, url: evt.target.result });
+        const label = prompt("Enter image label/description:", `Image ${animationObjects[selectedObject].images.length + 1}`) || `Image ${animationObjects[selectedObject].images.length + 1}`;
+        animationObjects[selectedObject].images.push({ id: nextImageId++, label, url: evt.target.result });
         renderImageSelect();
         renderImageList();
       };
@@ -765,7 +765,7 @@
     // Render the image list with thumbnails, rename, and remove
     function renderImageList() {
       imageList.innerHTML = "";
-      objectImages.forEach(img => {
+      animationObjects[selectedObject].images.forEach(img => {
         const li = document.createElement("li");
         li.style.display = "flex";
         li.style.alignItems = "center";
@@ -783,7 +783,7 @@
         });
         // Remove handler
         li.querySelector('button').onclick = () => {
-          if (objectImages.length === 1) {
+          if (animationObjects[selectedObject].images.length === 1) {
             alert("At least one image is required.");
             return;
           }
@@ -792,10 +792,10 @@
             if (animationObjects[selectedObject].keyframes[i].imageId === img.id) animationObjects[selectedObject].keyframes.splice(i, 1);
           }
           // Remove image
-          objectImages = objectImages.filter(i => i.id !== img.id);
+          animationObjects[selectedObject].images = animationObjects[selectedObject].images.filter(i => i.id !== img.id);
           // If current selection is gone, pick first
-          if (!objectImages.find(i => i.id === currentState.imageId)) {
-            currentState.imageId = objectImages[0].id;
+          if (!animationObjects[selectedObject].images.find(i => i.id === currentState.imageId)) {
+            currentState.imageId = animationObjects[selectedObject].images[0].id;
           }
           renderImageSelect();
           renderImageList();
@@ -823,8 +823,8 @@
       if (!file) return;
       const reader = new FileReader();
       reader.onload = function(evt) {
-        const label = prompt("Enter image label/description:", `Image ${objectImages.length + 1}`) || `Image ${objectImages.length + 1}`;
-        objectImages.push({ id: nextImageId++, label, url: evt.target.result });
+        const label = prompt("Enter image label/description:", `Image ${animationObjects[selectedObject].images.length + 1}`) || `Image ${animationObjects[selectedObject].images.length + 1}`;
+        animationObjects[selectedObject].images.push({ id: nextImageId++, label, url: evt.target.result });
         renderImageSelect();
         renderImageList();
       };
@@ -901,7 +901,7 @@
           }
 
           // Update next IDs
-          nextImageId = objectImages.reduce((max, img) => Math.max(max, img.id), 0) + 1;
+          nextImageId = animationObjects[selectedObject].images.reduce((max, img) => Math.max(max, img.id), 0) + 1;
           nextBackgroundImageId = backgroundImages.reduce((max, img) => Math.max(max, img.id), 0) + 1;
           renderImageSelect();
           renderImageList();
