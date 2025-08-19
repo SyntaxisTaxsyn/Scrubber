@@ -570,11 +570,23 @@
           renderImageList();
           renderMarkers();
           renderKeyframeTable();
+          showSelectedObject(idx);
           applyState(animationObjects[selectedObject].getState());
-          updateCanvasObjects();
+          //updateCanvasObjects();
+          
         };
         objectList.appendChild(li);
       });
+    }
+
+    function showSelectedObject(index) {
+
+      for (let i = 0; i < animationObjects.length; i++) {
+        animationObjects[i].visible = false; // Hide all objects
+      }
+      animationObjects[index].visible = true; // Show only the selected object
+      currentState.visible = true; // Ensure the current state reflects visibility
+      selectedObject = index;
     }
 
     // Add new object
@@ -598,7 +610,7 @@
     //selectedObject = animationObjects.length - 1;
   };
 
-  // Render the object list and handle selection
+/*   // Render the object list and handle selection
 function renderObjectList() {
   objectList.innerHTML = "";
   animationObjects.forEach((obj, idx) => {
@@ -621,9 +633,9 @@ function renderObjectList() {
     };
     objectList.appendChild(li);
   });
-}
+} */
 
-function createDefaultAnimationObject(id, name = "Object " + id) {
+/* function createDefaultAnimationObject(id, name = "Object " + id) {
   return new AnimationObject({
     id,
     name,
@@ -640,9 +652,9 @@ function createDefaultAnimationObject(id, name = "Object " + id) {
       { id: 1, label: "Default", url: "Images/gupxCropped.png" }
     ]
   });
-}
+} */
 
-function createCanvasObjectDiv(obj) {
+/* function createCanvasObjectDiv(obj) {
   let objDiv = document.createElement("div");
   objDiv.className = "canvas-object";
   objDiv.style.position = "absolute";
@@ -726,7 +738,7 @@ function createCanvasObjectDiv(obj) {
 
   canvas.appendChild(objDiv);
 
-}
+} */
 
 
 
@@ -1056,67 +1068,67 @@ function createCanvasObjectDiv(obj) {
       });
     }
 
-    applyState(currentState);
+    //applyState(currentState);
 
-    // Drag logic
+ /*    // Drag logic
     let isDragging = false;
-    let dragOffset = { x: 0, y: 0 };
+    let dragOffset = { x: 0, y: 0 }; */
 
-    function getTouchPos(evt) {
+/*     function getTouchPos(evt) {
       const touch = evt.touches[0];
       const rect = object.parentElement.getBoundingClientRect();
       return {
         x: touch.clientX - rect.left,
         y: touch.clientY - rect.top
       };
-    }
+    } */
 
-    function getMousePos(evt) {
+/*     function getMousePos(evt) {
       const rect = object.parentElement.getBoundingClientRect();
       return {
         x: evt.clientX - rect.left,
         y: evt.clientY - rect.top
       };
-    }
+    } */
 
-    object.addEventListener("touchstart", (e) => {
+    /* object.addEventListener("touchstart", (e) => {
       e.preventDefault();
       isDragging = true;
       const pos = getTouchPos(e);
       dragOffset.x = pos.x - currentState.x;
       dragOffset.y = pos.y - currentState.y;
-    });
+    }); */
 
-    object.addEventListener("touchmove", (e) => {
+    /* object.addEventListener("touchmove", (e) => {
       if (!isDragging) return;
       const pos = getTouchPos(e);
       currentState.x = pos.x - dragOffset.x;
       currentState.y = pos.y - dragOffset.y;
       applyState(currentState);
-    });
+    }); */
 
-    object.addEventListener("touchend", () => {
+    /* object.addEventListener("touchend", () => {
       isDragging = false;
-    });
+    }); */
 
-    object.addEventListener("mousedown", (e) => {
+    /* object.addEventListener("mousedown", (e) => {
       isDragging = true;
       const pos = getMousePos(e);
       dragOffset.x = pos.x - currentState.x;
       dragOffset.y = pos.y - currentState.y;
-    });
+    }); */
 
-    window.addEventListener("mousemove", (e) => {
+    /* window.addEventListener("mousemove", (e) => {
       if (!isDragging) return;
       const pos = getMousePos(e);
       currentState.x = pos.x - dragOffset.x;
       currentState.y = pos.y - dragOffset.y;
       applyState(currentState);
-    });
+    }); */
 
-    window.addEventListener("mouseup", () => {
+    /* window.addEventListener("mouseup", () => {
       isDragging = false;
-    });
+    }); */
 
     function renderImageSelect() {
       imageSelect.innerHTML = "";
