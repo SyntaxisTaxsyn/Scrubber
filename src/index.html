@@ -1281,10 +1281,14 @@ function renderObjectList() {
           backgroundImages = data.backgroundImages || [{ id: 1, label: "Default BG", url: "" }];
           backgroundKeyframes = data.backgroundKeyframes || [];
           currentBackground = data.currentBackground || { imageId: 1 };
+          
+          /// make sure array data for animationObjects is initialized
+          animationObjects.length = 0;
+          animationObjects.allObjects = [];
+          AnimationObject.allObjects = [];
 
           // Restore animationObjects
           if (Array.isArray(data.animationObjects)) {
-            animationObjects.length = 0;
             data.animationObjects.forEach(objData => {
               animationObjects.push(new AnimationObject(objData));
             });
@@ -1306,6 +1310,7 @@ function renderObjectList() {
           renderBackgroundKeyframeTable();
           applyState(currentState);
           applyBackground(currentBackground);
+          renderObjectList();
         } catch (err) {
           alert("Failed to load project: " + err.message);
         }
