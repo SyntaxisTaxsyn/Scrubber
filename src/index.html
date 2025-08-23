@@ -234,6 +234,9 @@
   </label>
 
   <script>
+
+    const showAllObjectsCheckbox = document.getElementById("showAllObjectsCheckbox");
+
     class AnimationObject {
 
       static allObjects = []; // keep track of all instances
@@ -612,140 +615,7 @@
     //selectedObject = animationObjects.length - 1;
   };
 
-/*   // Render the object list and handle selection
-function renderObjectList() {
-  objectList.innerHTML = "";
-  animationObjects.forEach((obj, idx) => {
-    const li = document.createElement("li");
-    li.textContent = obj.name;
-    li.style.cursor = "pointer";
-    li.style.padding = "4px 8px";
-    li.style.borderRadius = "4px";
-    li.style.marginBottom = "4px";
-    li.style.background = idx === selectedObject ? "#e0f0ff" : "";
-    li.onclick = () => {
-      selectedObject = idx;
-      renderObjectList();
-      renderImageSelect();
-      renderImageList();
-      renderMarkers();
-      renderKeyframeTable();
-      applyState(animationObjects[selectedObject].getState());
-      updateCanvasObjects();
-    };
-    objectList.appendChild(li);
-  });
-} */
-
-/* function createDefaultAnimationObject(id, name = "Object " + id) {
-  return new AnimationObject({
-    id,
-    name,
-    x: 100,
-    y: 100,
-    size: 50,
-    rotation: 0,
-    opacity: 1,
-    visible: true,
-    mirror: false,
-    imageId: 1,
-    keyframes: [],
-    images: [
-      { id: 1, label: "Default", url: "Images/gupxCropped.png" }
-    ]
-  });
-} */
-
-/* function createCanvasObjectDiv(obj) {
-  let objDiv = document.createElement("div");
-  objDiv.className = "canvas-object";
-  objDiv.style.position = "absolute";
-  objDiv.style.zIndex = 1;
-  objDiv.style.backgroundSize = "contain";
-  objDiv.style.backgroundRepeat = "no-repeat";
-  objDiv.style.backgroundPosition = "center";
-  objDiv.style.touchAction = "none";
-  objDiv.dataset.objId = obj.id;
-
-  // Drag logic for this object
-  let isDragging = false;
-  let dragOffset = { x: 0, y: 0 };
-
-  function getTouchPos(evt) {
-    const touch = evt.touches[0];
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: touch.clientX - rect.left,
-      y: touch.clientY - rect.top
-    };
-  }
-  function getMousePos(evt) {
-    const rect = canvas.getBoundingClientRect();
-    return {
-      x: evt.clientX - rect.left,
-      y: evt.clientY - rect.top
-    };
-  }
-
-  objDiv.addEventListener("touchstart", (e) => {
-    e.preventDefault();
-    isDragging = true;
-    const pos = getTouchPos(e);
-    dragOffset.x = pos.x - obj.x;
-    dragOffset.y = pos.y - obj.y;
-  });
-  objDiv.addEventListener("touchmove", (e) => {
-    if (!isDragging) return;
-    const pos = getTouchPos(e);
-    obj.x = pos.x - dragOffset.x;
-    obj.y = pos.y - dragOffset.y;
-    updateCanvasObjects();
-    if (animationObjects[selectedObject] === obj) applyState(obj.getState());
-  });
-  objDiv.addEventListener("touchend", () => {
-    isDragging = false;
-  });
-  objDiv.addEventListener("mousedown", (e) => {
-    isDragging = true;
-    const pos = getMousePos(e);
-    dragOffset.x = pos.x - obj.x;
-    dragOffset.y = pos.y - obj.y;
-  });
-
-  window.addEventListener("mousemove", (e) => {
-    if (!isDragging) return;
-    if (document.activeElement !== objDiv) return;
-    const pos = getMousePos(e);
-    obj.x = pos.x - dragOffset.x;
-    obj.y = pos.y - dragOffset.y;
-    updateCanvasObjects();
-    if (animationObjects[selectedObject] === obj) applyState(obj.getState());
-  });
-  window.addEventListener("mouseup", () => {
-    isDragging = false;
-  });
-
-  // Click to select this object
-  objDiv.onclick = (e) => {
-    selectedObject = animationObjects.findIndex(o => o.id === obj.id);
-    renderObjectList();
-    renderImageSelect();
-    renderImageList();
-    renderMarkers();
-    renderKeyframeTable();
-    applyState(obj.getState());
-    updateCanvasObjects();
-    e.stopPropagation();
-  };
-
-  canvas.appendChild(objDiv);
-
-} */
-
-
-
-
-    function applyState(state) {
+/*     function applyState(state) {
       // Update the selected object's properties
       const obj = animationObjects[selectedObject];
       obj.x = state.x;
@@ -773,7 +643,68 @@ function renderObjectList() {
 
       // If you are not using a continuous render loop, force a redraw:
       // AnimationObject.renderAll();
+    } */
+
+    function applyState(state) {
+      if (showAllObjectsCheckbox.checked) {
+        // 🚀 Update ALL objects according to timeline
+        animationObjects.forEach(obj => {
+          const s = getStateAt(obj, currentTime); // state per object
+          obj.x = s.x;
+          obj.y = s.y;
+          obj.size = s.size;
+          obj.rotation = s.rotation;
+          obj.opacity = s.opacity;
+          obj.visible = s.visible;
+          obj.mirror = s.mirror;
+          obj.imageId = s.imageId;
+        });
+
+        // UI still shows the selected object’s values
+        const selObj = animationObjects[selectedObject];
+        inputX.value = Math.round(selObj.x);
+        inputY.value = Math.round(selObj.y);
+        inputRotation.value = Math.round(selObj.rotation);
+        inputSize.value = Math.round(selObj.size);
+        inputOpacity.value = Math.round(selObj.opacity * 100);
+        inputVisible.checked = selObj.visible;
+        inputMirror.checked = selObj.mirror;
+        imageSelect.value = (
+          selObj.images.find(i => i.id === selObj.imageId)
+            ? selObj.imageId
+            : selObj.images[0].id
+        );
+      } else {
+        // 🎯 Normal single-object update
+        const obj = animationObjects[selectedObject];
+        obj.x = state.x;
+        obj.y = state.y;
+        obj.size = state.size;
+        obj.rotation = state.rotation;
+        obj.opacity = state.opacity;
+        obj.visible = state.visible;
+        obj.mirror = state.mirror;
+        obj.imageId = state.imageId;
+
+        // Update UI controls
+        inputX.value = Math.round(state.x);
+        inputY.value = Math.round(state.y);
+        inputRotation.value = Math.round(state.rotation);
+        inputSize.value = Math.round(state.size);
+        inputOpacity.value = Math.round(state.opacity * 100);
+        inputVisible.checked = state.visible;
+        inputMirror.checked = state.mirror;
+        imageSelect.value = (
+          obj.images.find(i => i.id === state.imageId)
+            ? state.imageId
+            : obj.images[0].id
+        );
+      }
+
+      // Force a redraw if needed
+      // AnimationObject.renderAll();
     }
+
 
     function readInputsToState() {
       if (selectedKeyframeIndex !== null && animationObjects[selectedObject].keyframes[selectedKeyframeIndex]) {
@@ -839,7 +770,7 @@ function renderObjectList() {
       };
     }
 
-    function getStateAt(time) {
+   /*  function getStateAt(time) {
       let kfs = animationObjects[selectedObject].keyframes;
       if (kfs.length === 0) return currentState;
       if (time <= kfs[0].time) return kfs[0];
@@ -854,6 +785,25 @@ function renderObjectList() {
         }
       }
       return currentState;
+    } */
+
+    function getStateAt(obj, time) {
+      const kfs = obj.keyframes;
+      if (kfs.length === 0) return { ...obj }; // return object itself if no keyframes
+
+      if (time <= kfs[0].time) return kfs[0];
+      if (time >= kfs[kfs.length - 1].time) return kfs[kfs.length - 1];
+
+      for (let i = 0; i < kfs.length - 1; i++) {
+        const a = kfs[i];
+        const b = kfs[i + 1];
+        if (time >= a.time && time <= b.time) {
+          const progress = (time - a.time) / (b.time - a.time);
+          return interpolate(a, b, progress);
+        }
+      }
+
+      return { ...obj };
     }
 
     function getBackgroundAt(time) {
@@ -872,7 +822,7 @@ function renderObjectList() {
       return currentBackground;
     }
 
-    function updateFromTimeline() {
+    /* function updateFromTimeline() {
       currentTime = parseFloat(timeline.value);
       const state = getStateAt(currentTime);
       const bgState = getBackgroundAt(currentTime);
@@ -881,7 +831,30 @@ function renderObjectList() {
       applyBackground(bgState);
       renderKeyframeTable();
       renderBackgroundKeyframeTable();
+    } */
+
+    function updateFromTimeline() {
+      currentTime = parseFloat(timeline.value);
+      const bgState = getBackgroundAt(currentTime);
+      selectedKeyframeIndex = null;
+
+      if (showAllObjectsCheckbox.checked) {
+        // Update every object
+        animationObjects.forEach(obj => {
+          const state = getStateAt(obj, currentTime);
+          applyState(state); // assumes AnimationObject has a method for this
+        });
+      } else {
+        // Update only the selected object
+        const state = getStateAt(animationObjects[selectedObject], currentTime);
+        applyState(state); // your existing single-object logic
+      }
+
+      applyBackground(bgState);
+      renderKeyframeTable();
+      renderBackgroundKeyframeTable();
     }
+
 
     timeline.addEventListener("input", updateFromTimeline);
 
@@ -1069,68 +1042,6 @@ function renderObjectList() {
         });
       });
     }
-
-    //applyState(currentState);
-
- /*    // Drag logic
-    let isDragging = false;
-    let dragOffset = { x: 0, y: 0 }; */
-
-/*     function getTouchPos(evt) {
-      const touch = evt.touches[0];
-      const rect = object.parentElement.getBoundingClientRect();
-      return {
-        x: touch.clientX - rect.left,
-        y: touch.clientY - rect.top
-      };
-    } */
-
-/*     function getMousePos(evt) {
-      const rect = object.parentElement.getBoundingClientRect();
-      return {
-        x: evt.clientX - rect.left,
-        y: evt.clientY - rect.top
-      };
-    } */
-
-    /* object.addEventListener("touchstart", (e) => {
-      e.preventDefault();
-      isDragging = true;
-      const pos = getTouchPos(e);
-      dragOffset.x = pos.x - currentState.x;
-      dragOffset.y = pos.y - currentState.y;
-    }); */
-
-    /* object.addEventListener("touchmove", (e) => {
-      if (!isDragging) return;
-      const pos = getTouchPos(e);
-      currentState.x = pos.x - dragOffset.x;
-      currentState.y = pos.y - dragOffset.y;
-      applyState(currentState);
-    }); */
-
-    /* object.addEventListener("touchend", () => {
-      isDragging = false;
-    }); */
-
-    /* object.addEventListener("mousedown", (e) => {
-      isDragging = true;
-      const pos = getMousePos(e);
-      dragOffset.x = pos.x - currentState.x;
-      dragOffset.y = pos.y - currentState.y;
-    }); */
-
-    /* window.addEventListener("mousemove", (e) => {
-      if (!isDragging) return;
-      const pos = getMousePos(e);
-      currentState.x = pos.x - dragOffset.x;
-      currentState.y = pos.y - dragOffset.y;
-      applyState(currentState);
-    }); */
-
-    /* window.addEventListener("mouseup", () => {
-      isDragging = false;
-    }); */
 
     function renderImageSelect() {
       imageSelect.innerHTML = "";
