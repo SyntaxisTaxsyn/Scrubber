@@ -256,7 +256,8 @@
         mirror = false,
         imageId = 1,
         keyframes = [],
-        images = [{ id: 1, label: "Default", url: "" }]
+        images = [{ id: 1, label: "Default", url: "" }],
+        sounds = [] // NEW: [{ id, label, url }]
       }) {
         this.id = id;
         this.name = name;
@@ -270,6 +271,20 @@
         this.imageId = imageId;
         this.keyframes = keyframes; // [{...}]
         this.images = images;       // [{id, label, url}]
+        this.sounds = sounds; // store original sound data
+        this._audioElements = {}; // preload audio
+
+        for (const sound of sounds) {
+          if (sound.url) {
+            const audio = new Audio(sound.url);
+            audio.loop = !!sound.loop;                      // enable looping
+            audio.volume = sound.volume !== undefined       // set volume
+              ? Math.max(0, Math.min(1, sound.volume))      // clamp to [0, 1]
+              : 1.0;
+
+            this._audioElements[sound.id] = audio;
+          }
+        }
 
         // Initialize canvas once
         if (!AnimationObject.initialized) {
@@ -442,6 +457,36 @@
         requestAnimationFrame(AnimationObject.renderAll);
       }
 
+      playSoundById(id) {
+        const audio = this._audioElements[id];
+        if (audio) {
+          audio.pause();           // avoid overlap
+          audio.currentTime = 0;
+          audio.play().catch(err => console.warn("Audio play error:", err));
+        } else {
+          console.warn(`Sound with id ${id} not found`);
+        }
+      }
+
+      stopSoundById(id) {
+        const audio = this._audioElements[id];
+        if (audio) {
+          audio.pause();           // stop playback
+          audio.currentTime = 0;   // reset to start
+        } else {
+          console.warn(`Sound with id ${id} not found`);
+        }
+      }
+
+      setSoundVolumeById(id, volume) {
+        const audio = this._audioElements[id];
+        if (audio) {
+          audio.volume = Math.max(0, Math.min(1, volume)); // clamp to [0, 1]
+        } else {
+          console.warn(`Sound with id ${id} not found`);
+        }
+      }
+
     }
 
     
@@ -493,6 +538,15 @@
         keyframes: [],
         images: [
           { id: 1, label: "Default", url: "Images/gupxCropped.png" }
+        ],
+        sounds: [
+          {
+            id: 1,
+            label: "Default Sound",
+            url: "sounds/default.mp3",
+            loop: false,
+            volume: 1.0
+          }
         ]
       })
     ];
