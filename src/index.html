@@ -147,7 +147,7 @@
 
   <div id="controls">
     <div id="timelineWrapper">
-      <input type="range" id="timeline" min="0" max="100" value="0">
+      <input type="range" id="timeline" min="0" max="200" value="0">
       <div id="markerTrack"></div>
     </div>
     <button id="addKeyframe">Add Keyframe</button>
@@ -156,6 +156,8 @@
     <button id="resetBtn">Reset</button>
     <button id="saveBtn">Save</button>
     <button id="loadBtn">Load</button>
+    <button id="increaseTimeBtn">+100</button>
+    <button id="decreaseTimeBtn">-100</button>
     <input type="file" id="imageInput" accept="image/*" style="display:none;">
     <input type="file" id="loadInput" accept=".json" style="display:none;">
     <button onclick="addBackgroundKeyframe()">Add Background Keyframe</button>
@@ -919,8 +921,9 @@
       if (playing) {
         playInterval = setInterval(() => {
           currentTime += 1;
-          if (currentTime > 100) {
-            currentTime = 100;
+          const maxTime = parseInt(timeline.max, 10); // always use current max
+          if (currentTime > maxTime) {
+            currentTime = maxTime;
             clearInterval(playInterval);
             playing = false;
             togglePlayBtn.textContent = "Play";
@@ -930,6 +933,22 @@
         }, 50);
       } else {
         clearInterval(playInterval);
+      }
+    });
+
+    // Buttons to adjust max time
+    increaseTimeBtn.addEventListener("click", () => {
+      timeline.max = parseInt(timeline.max, 10) + 100;
+    });
+
+    decreaseTimeBtn.addEventListener("click", () => {
+      let newMax = parseInt(timeline.max, 10) - 100;
+      if (newMax < 100) newMax = 100; // bottom out at 100
+      timeline.max = newMax;
+      if (currentTime > newMax) {
+        currentTime = newMax;
+        timeline.value = currentTime;
+        updateFromTimeline();
       }
     });
 
@@ -972,7 +991,7 @@
       renderKeyframeTable();
     });
 
-    function renderMarkers() {
+    /* function renderMarkers() {
       markerTrack.innerHTML = "";
       animationObjects[selectedObject].keyframes.forEach((kf) => {
         const marker = document.createElement("div");
@@ -980,7 +999,25 @@
         marker.style.left = `${(kf.time / 100) * 300}px`;
         markerTrack.appendChild(marker);
       });
-    }
+    } */
+
+    function renderMarkers() {
+      markerTrack.innerHTML = "";
+
+      const maxTime = parseInt(timeline.max, 10);
+      const trackWidth = markerTrack.offsetWidth; // use actual width of marker track
+
+      animationObjects[selectedObject].keyframes.forEach((kf) => {
+        const marker = document.createElement("div");
+        marker.className = "marker";
+
+        // Position marker proportionally based on timeline max
+        const position = (kf.time / maxTime) * trackWidth;
+        marker.style.left = `${position}px`;
+
+        markerTrack.appendChild(marker);
+      });
+  }
 
     function renderKeyframeTable() {
       keyframeTable.innerHTML = "";
@@ -1211,7 +1248,8 @@
         backgroundImages,         // <-- add this
         backgroundKeyframes,      // <-- add this
         currentBackground,
-        animationObjects         // <-- add this
+        animationObjects,         // <-- add this
+        timelineMax: parseInt(timeline.max, 10) // <-- store current max
       };
       const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
       const url = URL.createObjectURL(blob);
@@ -1262,6 +1300,14 @@
             if (animationObjects.length > 0) {
               Object.assign(currentState, animationObjects[0].getState());
             }
+          }
+
+          // Restore timeline max (default to 200 if missing)
+          timeline.max = data.timelineMax || 100;
+          if (currentTime > timeline.max) {
+            currentTime = timeline.max;
+            timeline.value = currentTime;
+            updateFromTimeline();
           }
 
           // Update next IDs
