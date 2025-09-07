@@ -613,7 +613,7 @@
       });
     }
 
-    // Render the object list and handle selection
+  /*   // Render the object list and handle selection
     function renderObjectList() {
       objectList.innerHTML = "";
       animationObjects.forEach((obj, idx) => {
@@ -638,7 +638,63 @@
         };
         objectList.appendChild(li);
       });
-    }
+    } */
+
+    function renderObjectList() {
+  objectList.innerHTML = "";
+
+  animationObjects.forEach((obj, idx) => {
+    const li = document.createElement("li");
+    li.textContent = obj.name;
+    li.style.cursor = "pointer";
+    li.style.padding = "4px 8px";
+    li.style.borderRadius = "4px";
+    li.style.marginBottom = "4px";
+    li.style.background = idx === selectedObject ? "#e0f0ff" : "";
+
+    let clickTimer;
+
+    li.addEventListener("click", () => {
+      // Delay to see if it's a double click
+      clickTimer = setTimeout(() => {
+        selectedObject = idx;
+        renderObjectList();
+        renderImageSelect();
+        renderImageList();
+        renderMarkers();
+        renderKeyframeTable();
+        showSelectedObject(idx);
+        applyState(animationObjects[selectedObject].getState());
+      }, 200); // faster double-click response
+    });
+
+    li.addEventListener("dblclick", () => {
+      clearTimeout(clickTimer); // cancel single-click action
+
+      const input = document.createElement("input");
+      input.type = "text";
+      input.value = obj.name;
+      input.style.width = "100%";
+
+      li.innerHTML = "";
+      li.appendChild(input);
+      input.focus();
+      input.select(); // highlight all text immediately
+
+      const saveName = () => {
+        obj.name = input.value.trim() || `Object ${obj.id}`;
+        renderObjectList();
+      };
+      input.addEventListener("blur", saveName);
+      input.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") saveName();
+      });
+    });
+
+    objectList.appendChild(li);
+  });
+}
+
 
     function showSelectedObject(index) {
 
@@ -650,7 +706,31 @@
       selectedObject = index;
     }
 
-    // Add new object
+    addObjectBtn.onclick = () => {
+  const newId = animationObjects.length > 0 
+    ? Math.max(...animationObjects.map(o => o.id)) + 1 
+    : 1;
+
+  // Ask user for name
+  let name = prompt("Enter a name for the new object (leave blank for default):", "");
+
+  // Fallback if no name provided
+  if (!name || name.trim() === "") {
+    name = "Object " + newId;
+  }
+
+  // Create the object
+  const obj = createDefaultAnimationObject(newId, name);
+  animationObjects.push(obj);
+
+  // Update UI
+  renderObjectList();
+  // createCanvasObjectDiv(obj);
+  // selectedObject = animationObjects.length - 1;
+};
+
+
+  /*   // Add new object
   addObjectBtn.onclick = () => {
     /* 
     // Create a new div for the object on the canvas
@@ -662,14 +742,14 @@
     renderMarkers();
     renderKeyframeTable();
     applyState(obj.getState());
-    updateCanvasObjects(); */
+    updateCanvasObjects(); 
     const newId = animationObjects.length > 0 ? Math.max(...animationObjects.map(o => o.id)) + 1 : 1;
     const obj = createDefaultAnimationObject(newId, "Object " + newId);
     animationObjects.push(obj);
     renderObjectList();
     //createCanvasObjectDiv(obj);
     //selectedObject = animationObjects.length - 1;
-  };
+  }; */
 
 /*     function applyState(state) {
       // Update the selected object's properties
