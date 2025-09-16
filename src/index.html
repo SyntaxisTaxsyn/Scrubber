@@ -174,6 +174,21 @@
     <label>Image: 
       <select id="imageSelect"></select>
     </label>
+    <!-- New interaction fields -->
+    <label>Interaction Required: 
+      <input type="checkbox" id="inputInteractionEnabled">
+    </label>
+
+    <label>Interaction Type: 
+      <select id="inputInteractionType">
+        <option value="click">Click</option>
+        <!-- more interaction types later -->
+      </select>
+    </label>
+
+    <label>Interaction Received: 
+      <input type="checkbox" id="inputInteractionReceived">
+    </label>
   </div>
 
   <div id="imagePanel">
@@ -208,7 +223,11 @@
         <th>Visible</th>
         <th>Mirror</th>
         <th>Image</th>
-        <th>Action</th>
+        <th>Itrct Rqd</th>
+        <th>Itype</th>
+        <th>Itrct Rcv</th>
+        <th>Delete</th>
+        <th>Up/Dwn</th>
       </tr>
     </thead>
     <tbody>
@@ -259,7 +278,11 @@
         imageId = 1,
         keyframes = [],
         images = [{ id: 1, label: "Default", url: "" }],
-        sounds = [] // NEW: [{ id, label, url }]
+        sounds = [], // NEW: [{ id, label, url }]
+        interactionEnabled = false,     // NEW: does this object require interaction?
+        interactionType = "click",       // NEW: what kind of interaction ("click", later "hover", "keypress"...)
+        interactionReceived = false,  // NEW: has the interaction been received?
+        InteractionFlagSeen = false
       }) {
         this.id = id;
         this.name = name;
@@ -275,6 +298,9 @@
         this.images = images;       // [{id, label, url}]
         this.sounds = sounds; // store original sound data
         this._audioElements = {}; // preload audio
+        this.interactionEnabled = interactionEnabled;
+        this.interactionType = interactionType;
+        this.InteractionFlagSeen = InteractionFlagSeen;
 
         for (const sound of sounds) {
           if (sound.url) {
@@ -313,7 +339,11 @@
           opacity: this.opacity,
           visible: this.visible,
           mirror: this.mirror,
-          imageId: this.imageId
+          imageId: this.imageId,
+          interactionEnabled: this.interactionEnabled,
+          interactionType: this.interactionType,
+          interactionReceived: this.interactionReceived,
+          InteractionFlagSeen: this.InteractionFlagSeen
         };
       }
 
@@ -353,6 +383,17 @@
 
         canvas.addEventListener("mousedown", (evt) => {
           const pos = getPos(evt);
+
+          if (this.interactionEnabled && this.interactionType === "click" && this.hitTest(pos.x, pos.y)) {
+            console.log(`Interaction triggered on object ${this.id} (${this.name})`);
+            this.interactionReceived = true; // mark interaction received
+             resumeTimeline();
+            // Example: pause timeline here
+            /* if (typeof pauseTimeline === "function") {
+              pauseTimeline(this); // let your global timeline code handle it
+            } */
+          }
+
           if (this.hitTest(pos.x, pos.y)) {
             this.isDragging = true;
             this.offsetX = pos.x - this.x;
@@ -510,6 +551,9 @@
     const inputOpacity = document.getElementById("inputOpacity");
     const inputVisible = document.getElementById("inputVisible");
     const inputMirror = document.getElementById("inputMirror");
+    const inputInteractionEnabled = document.getElementById("inputInteractionEnabled");   // NEW
+    const inputInteractionType = document.getElementById("inputInteractionType");         // NEW
+    const inputInteractionReceived = document.getElementById("inputInteractionReceived"); // NEW
 
     const markerTrack = document.getElementById("markerTrack");
     const keyframeTable = document.getElementById("keyframeTable").querySelector("tbody");
@@ -549,7 +593,11 @@
             loop: false,
             volume: 1.0
           }
-        ]
+        ],
+        interactionEnabled: false,
+        interactionType: "click",
+        interactionReceived: false,
+        InteractionFlagSeen: false
       })
     ];
 
@@ -609,7 +657,11 @@
         keyframes: [],
         images: [
           { id: 1, label: "Default", url: "Images/gupxCropped.png" }
-        ]
+        ],
+        interactionEnabled: false,
+        interactionType: "click",
+        interactionReceived: false,
+        InteractionFlagSeen: false
       });
     }
 
@@ -794,6 +846,9 @@
           obj.visible = s.visible;
           obj.mirror = s.mirror;
           obj.imageId = s.imageId;
+          obj.interactionEnabled = s.interactionEnabled;
+          obj.interactionType = s.interactionType;
+          obj.interactionReceived = s.interactionReceived;
         });
 
         // UI still shows the selected object’s values
@@ -810,6 +865,9 @@
             ? selObj.imageId
             : selObj.images[0].id
         );
+        inputInteractionEnabled.checked = selObj.interactionEnabled;
+        inputInteractionType.value = selObj.interactionType;
+        inputInteractionReceived.checked = selObj.interactionReceived;
       } else {
         // 🎯 Normal single-object update
         const obj = animationObjects[selectedObject];
@@ -821,6 +879,9 @@
         obj.visible = state.visible;
         obj.mirror = state.mirror;
         obj.imageId = state.imageId;
+        obj.interactionEnabled = state.interactionEnabled;
+        obj.interactionType = state.interactionType;
+        obj.interactionReceived = state.interactionReceived;
 
         // Update UI controls
         inputX.value = Math.round(state.x);
@@ -835,6 +896,9 @@
             ? state.imageId
             : obj.images[0].id
         );
+        inputInteractionEnabled.checked = state.interactionEnabled;
+        inputInteractionType.value = state.interactionType;
+        inputInteractionReceived.checked = state.interactionReceived;
       }
 
       // Force a redraw if needed
@@ -854,6 +918,14 @@
         kf.visible = inputVisible.checked;
         kf.mirror = inputMirror.checked;
         kf.imageId = parseInt(imageSelect.value);
+        kf.interactionEnabled = inputInteractionEnabled.checked;
+        kf.interactionType = inputInteractionType.value;
+        kf.interactionReceived = inputInteractionReceived.checked;
+        // if interaction is disabled, force reset
+        if (!kf.interactionEnabled) {
+          kf.interactionReceived = false;
+        }
+
         applyState(kf);
         renderKeyframeTable();
         renderMarkers();
@@ -867,6 +939,12 @@
         currentState.visible = inputVisible.checked;
         currentState.mirror = inputMirror.checked;
         currentState.imageId = parseInt(imageSelect.value);
+        currentState.interactionEnabled = inputInteractionEnabled.checked;
+        currentState.interactionType = inputInteractionType.value;
+        currentState.interactionReceived = inputInteractionReceived.checked;
+        if (!currentState.interactionEnabled) {
+          currentState.interactionReceived = false;
+        }
         applyState(currentState);
       }
     }
@@ -879,6 +957,9 @@
     inputVisible.addEventListener("change", readInputsToState);
     inputMirror.addEventListener("change", readInputsToState); // <-- add this
     imageSelect.addEventListener("change", readInputsToState);
+    inputInteractionEnabled.addEventListener("change", readInputsToState);
+    inputInteractionType.addEventListener("change", readInputsToState);
+    inputInteractionReceived.addEventListener("change", readInputsToState);
 
     addKeyframeBtn.addEventListener("click", () => {
       const time = parseFloat(timeline.value);
@@ -892,8 +973,22 @@
       console.log("Added keyframe:", state);
     });
 
-    function interpolate(a, b, t) {
+    function interpolateObj(a, b, t, o) {
       const lerp = (x, y) => x + (y - x) * t;
+
+      // This mechanism handles the 1 shot activation of the interaction flag per keyframe
+      var interactionReqFlag = false;
+      if (a.interactionEnabled && !o.InteractionFlagSeen)
+      {
+        interactionReqFlag = true;
+        o.InteractionFlagSeen = true;
+      }
+      if(!a.interactionEnabled)
+      {
+        o.InteractionFlagSeen = false;
+        interactionReqFlag = false;
+      }
+    
       return {
         x: lerp(a.x, b.x),
         y: lerp(a.y, b.y),
@@ -902,7 +997,25 @@
         opacity: lerp(a.opacity, b.opacity),
         visible: a.visible,
         mirror: a.mirror,
-        imageId: a.imageId // step, not interpolated
+        imageId: a.imageId, // step, not interpolated
+        interactionEnabled: interactionReqFlag, // step, not interpolated
+        interactionType: a.interactionType,       // step, not interpolated
+        interactionReceived: a.interactionReceived // step, not interpolated
+      };
+    }
+
+    function interpolate(a, b, t) {
+      const lerp = (x, y) => x + (y - x) * t;
+    
+      return {
+        x: lerp(a.x, b.x),
+        y: lerp(a.y, b.y),
+        size: lerp(a.size, b.size),
+        rotation: lerp(a.rotation, b.rotation),
+        opacity: lerp(a.opacity, b.opacity),
+        visible: a.visible,
+        mirror: a.mirror,
+        imageId: a.imageId
       };
     }
 
@@ -935,7 +1048,11 @@
         const b = kfs[i + 1];
         if (time >= a.time && time <= b.time) {
           const progress = (time - a.time) / (b.time - a.time);
-          return interpolate(a, b, progress);
+          if(a.interactionEnabled && !obj.InteractionFlagSeen)
+          {
+            a.InteractionFlagSeen = true;
+          }
+          return interpolateObj(a, b, progress, obj);
         }
       }
 
@@ -992,7 +1109,52 @@
     }
 
 
-    timeline.addEventListener("input", updateFromTimeline);
+    function pauseTimelineForInteraction(obj) {
+      clearInterval(playInterval);
+      playing = false;
+      togglePlayBtn.textContent = "Play";
+      console.log(`⏸ Timeline paused waiting for interaction on object ${obj.id} (${obj.name})`);
+    }
+
+    function resumeTimeline() {
+      if (!playing) {
+        playing = true;
+        togglePlayBtn.textContent = "Pause";
+        playInterval = setInterval(() => {
+          currentTime += 1;
+          const maxTime = parseInt(timeline.max, 10);
+
+          // ⏸ Check for interaction requirement
+          const blockingObj = animationObjects.find(
+            obj => obj.interactionEnabled && !obj.interactionReceived
+          );
+          if (blockingObj) {
+            pauseTimelineForInteraction(blockingObj);
+            return; // stop advancing until resumed
+          }
+
+          if (currentTime > maxTime) {
+            currentTime = maxTime;
+            clearInterval(playInterval);
+            playing = false;
+            togglePlayBtn.textContent = "Play";
+          }
+          timeline.value = currentTime;
+          updateFromTimeline();
+        }, 50);
+      }
+    }
+
+
+    //timeline.addEventListener("input", updateFromTimeline);
+    timeline.addEventListener("input", () => {
+      // reset interactions when scrubbing manually
+      animationObjects.forEach(obj => {
+        obj.interactionReceived = false;
+      });
+
+      updateFromTimeline(); // existing behavior
+    });
 
     togglePlayBtn.addEventListener("click", () => {
       playing = !playing;
@@ -1002,6 +1164,16 @@
         playInterval = setInterval(() => {
           currentTime += 1;
           const maxTime = parseInt(timeline.max, 10); // always use current max
+
+          // ⏸ Check for interaction requirement
+          const blockingObj = animationObjects.find(
+            obj => obj.interactionEnabled && !obj.interactionReceived
+          );
+          if (blockingObj) {
+            pauseTimelineForInteraction(blockingObj);
+            return; // stop advancing until resumed
+          }
+
           if (currentTime > maxTime) {
             currentTime = maxTime;
             clearInterval(playInterval);
@@ -1114,6 +1286,9 @@
           <td>${kf.visible ? "Yes" : "No"}</td>
           <td>${kf.mirror ? "Yes" : "No"}</td>
           <td>${img ? img.label : ""}</td>
+          <td>${kf.interactionEnabled ? "Yes" : "No"}</td>
+          <td>${kf.interactionType || "-"}</td>
+          <td>${kf.interactionReceived ? "Yes" : "No"}</td>
           <td><button class="deleteKeyframeBtn" data-index="${index}" title="Delete" style="font-family:'Segoe UI Symbol','Segoe UI Emoji',sans-serif;">🗑️</button></td>
           <td>
             <button class="moveUpBtn" data-index="${index}" title="Move Up">▲</button>
@@ -1138,6 +1313,9 @@
           inputMirror.checked = kf.mirror;
           imageSelect.value = kf.imageId;
           timeline.value = kf.time;
+          inputInteractionEnabled.checked = !!kf.interactionEnabled;
+          inputInteractionType.value = kf.interactionType || "click";
+          inputInteractionReceived.checked = !!kf.interactionReceived;
           renderKeyframeTable();
         });
         keyframeTable.appendChild(row);
