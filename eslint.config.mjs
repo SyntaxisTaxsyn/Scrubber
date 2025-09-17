@@ -9,16 +9,43 @@ export default defineConfig([
   {
     files: ['**/*.js'],
     languageOptions: {
-      sourceType: 'commonjs',
+      sourceType: 'module', // ES modules
       globals: globals.browser,
     },
     plugins: {
       prettier,
     },
     rules: {
-      'prettier/prettier': 'error', // show Prettier issues in ESLint
-      'no-unused-vars': 'warn',
-      'no-console': 'off',
+      // Prettier integration
+      'prettier/prettier': 'error',
+
+      // Possible errors
+      'no-undef': 'error',
+      'no-unreachable': 'error',
+      'no-empty': ['error', { allowEmptyCatch: true }],
+
+      // Best practices
+      eqeqeq: ['error', 'always'],
+      curly: 'error',
+      'no-eval': 'error',
+      'no-implied-eval': 'error',
+      'no-console': 'warn',
+
+      // Variables
+      'no-unused-vars': ['warn', { vars: 'all', args: 'after-used', ignoreRestSiblings: true }],
+      'no-redeclare': 'error',
+
+      // Stylistic
+      semi: ['error', 'always'],
+      quotes: ['error', 'double', { avoidEscape: true }],
+      'comma-dangle': ['error', 'never'],
+      indent: ['error', 2, { SwitchCase: 1 }],
+      'brace-style': ['error', '1tbs', { allowSingleLine: true }],
+
+      // ES6
+      'prefer-const': 'warn',
+      'no-var': 'error',
+      'arrow-spacing': ['error', { before: true, after: true }],
     },
   },
 
