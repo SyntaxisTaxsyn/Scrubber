@@ -123,6 +123,20 @@
       padding: 0;
       margin: 0 0 10px 0;
     }
+
+    .interaction-hint {
+      font-size: 24px;
+      animation: pulse 1s infinite;
+      color: red;
+      text-shadow: 0 0 5px rgba(255,0,0,0.7);
+    }
+
+    @keyframes pulse {
+      0%   { transform: scale(1); opacity: 1; }
+      50%  { transform: scale(1.2); opacity: 0.5; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+
   </style>
 </head>
 <body>
@@ -258,6 +272,8 @@
 
     const showAllObjectsCheckbox = document.getElementById("showAllObjectsCheckbox");
 
+    let pausedForInteraction = false;
+
     class AnimationObject {
 
       static allObjects = []; // keep track of all instances
@@ -326,6 +342,16 @@
         this.offsetX = 0;
         this.offsetY = 0;
 
+        // Object interaction hint code
+        this._hintEl = document.createElement("div");
+        this._hintEl.className = "interaction-hint";
+        this._hintEl.innerText = "👆"; 
+        this._hintEl.style.position = "absolute";
+        this._hintEl.style.pointerEvents = "none";
+        this._hintEl.style.display = "none";
+
+        AnimationObject.canvas.parentElement.appendChild(this._hintEl);
+
         // Register events
         this.registerEvents();
 
@@ -387,6 +413,7 @@
           if (this.interactionEnabled && this.interactionType === "click" && this.hitTest(pos.x, pos.y)) {
             console.log(`Interaction triggered on object ${this.id} (${this.name})`);
             this.interactionReceived = true; // mark interaction received
+            this.interactionEnabled = false; // disable further interaction until reset
              resumeTimeline();
             // Example: pause timeline here
             /* if (typeof pauseTimeline === "function") {
@@ -487,6 +514,83 @@
         ctx.drawImage(this._imgElement, -drawW / 2, -drawH / 2, drawW, drawH);
 
         ctx.restore();
+
+        /* // --- Update CSS hint ---
+        if (this.interactionEnabled && !this.interactionReceived) {
+          const rect = AnimationObject.canvas.getBoundingClientRect();
+          const scaleX = rect.width / AnimationObject.canvas.width;
+          const scaleY = rect.height / AnimationObject.canvas.height;
+
+          // Object center in DOM space
+          const domX = rect.left + this.x * scaleX;
+          const domY = rect.top + this.y * scaleY;
+
+          // Use the actual drawn width/height for placement
+          const domW = drawW * scaleX;
+          const domH = drawH * scaleY;
+
+          this._hintEl.style.display = "block";
+
+          // Center hint above the object bounding box
+          this._hintEl.style.left = `${domX - domW / 2}px`;
+          this._hintEl.style.top  = `${domY - domH / 2 - 20}px`; // hover above by 20px
+        } else {
+          this._hintEl.style.display = "none";
+        } */
+
+        // --- Update CSS hint ---
+        if (pausedForInteraction && this.interactionEnabled && !this.interactionReceived) {
+          const rect = AnimationObject.canvas.getBoundingClientRect();
+          const scrollX = window.scrollX || window.pageXOffset;
+          const scrollY = window.scrollY || window.pageYOffset;
+          const scaleX = rect.width / AnimationObject.canvas.width;
+          const scaleY = rect.height / AnimationObject.canvas.height;
+
+          // Function to transform local coords -> world coords
+          const transformPoint = (px, py) => {
+            const angle = this.rotation * Math.PI / 180;
+            const cos = Math.cos(angle);
+            const sin = Math.sin(angle);
+            const mx = this.mirror ? -1 : 1;
+
+            // Apply mirror, rotation, then translate
+            const x = px * mx * cos - py * sin + this.x;
+            const y = px * mx * sin + py * cos + this.y;
+            return { x, y };
+          };
+
+          // Four corners of the drawn rect (local space)
+          const halfW = drawW / 2;
+          const halfH = drawH / 2;
+          const corners = [
+            transformPoint(-halfW, -halfH),
+            transformPoint( halfW, -halfH),
+            transformPoint( halfW,  halfH),
+            transformPoint(-halfW,  halfH)
+          ];
+
+          // Bounding box in world space
+          const minX = Math.min(...corners.map(c => c.x));
+          const maxX = Math.max(...corners.map(c => c.x));
+          const minY = Math.min(...corners.map(c => c.y));
+          const maxY = Math.max(...corners.map(c => c.y));
+
+          // Convert to DOM coords
+          const domMinX = rect.left + minX * scaleX;
+          const domMaxX = rect.left + maxX * scaleX;
+          const domMinY = rect.top  + minY * scaleY;
+          const domMaxY = rect.top  + maxY * scaleY;
+
+          const domCenterX = (domMinX + domMaxX) / 2;
+          const domTopY = domMinY;
+
+          this._hintEl.style.display = "block";
+          this._hintEl.style.left = `${domCenterX - this._hintEl.offsetWidth / 2 + scrollX}px`;
+          this._hintEl.style.top  = `${domTopY - this._hintEl.offsetHeight - 8 + scrollY}px`; // 8px above
+        } else {
+          this._hintEl.style.display = "none";
+        }
+
       }
 
        static renderAll() {
@@ -846,9 +950,9 @@
           obj.visible = s.visible;
           obj.mirror = s.mirror;
           obj.imageId = s.imageId;
-          obj.interactionEnabled = s.interactionEnabled;
-          obj.interactionType = s.interactionType;
-          obj.interactionReceived = s.interactionReceived;
+          //obj.interactionEnabled = s.interactionEnabled;
+          //obj.interactionType = s.interactionType;
+          //obj.interactionReceived = s.interactionReceived;
         });
 
         // UI still shows the selected object’s values
@@ -879,9 +983,9 @@
         obj.visible = state.visible;
         obj.mirror = state.mirror;
         obj.imageId = state.imageId;
-        obj.interactionEnabled = state.interactionEnabled;
-        obj.interactionType = state.interactionType;
-        obj.interactionReceived = state.interactionReceived;
+        //obj.interactionEnabled = state.interactionEnabled;
+        //obj.interactionType = state.interactionType;
+        //obj.interactionReceived = state.interactionReceived;
 
         // Update UI controls
         inputX.value = Math.round(state.x);
@@ -978,15 +1082,24 @@
 
       // This mechanism handles the 1 shot activation of the interaction flag per keyframe
       var interactionReqFlag = false;
+      console.log(
+        `[interaction check] obj=${o.id || "?"}, keyframe.t=${a.time}, ` +
+        `kf.interactionEnabled=${a.interactionEnabled}, ` +
+        `obj.InteractionFlagSeen=${o.InteractionFlagSeen}, ` +
+        `obj.interactionEnabled=${o.interactionEnabled}`
+      );
       if (a.interactionEnabled && !o.InteractionFlagSeen)
       {
         interactionReqFlag = true;
         o.InteractionFlagSeen = true;
+        o.interactionEnabled = true;
       }
       if(!a.interactionEnabled)
       {
         o.InteractionFlagSeen = false;
         interactionReqFlag = false;
+        o.interactionEnabled = false;
+        o.interactionReceived = false;
       }
     
       return {
@@ -1112,11 +1225,13 @@
     function pauseTimelineForInteraction(obj) {
       clearInterval(playInterval);
       playing = false;
+      pausedForInteraction = true;
       togglePlayBtn.textContent = "Play";
       console.log(`⏸ Timeline paused waiting for interaction on object ${obj.id} (${obj.name})`);
     }
 
     function resumeTimeline() {
+      pausedForInteraction = false;
       if (!playing) {
         playing = true;
         togglePlayBtn.textContent = "Pause";
