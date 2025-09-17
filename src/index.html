@@ -1,755 +1,728 @@
-<!DOCTYPE html> 
+<!doctype html>
 <html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Scrubber Project Editor</title>
-  <style>
-    body {
-      font-family: sans-serif;
-      padding: 20px;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <title>Scrubber Project Editor</title>
+    <style>
+      body {
+        font-family: sans-serif;
+        padding: 20px;
+      }
 
-    #canvas {
-      position: relative;
-      width: 600px;
-      height: 400px;
-      border: 1px solid #ccc;
-      margin-bottom: 20px;
-      /*background-color: #f9f9f9;*/
-    }
+      #canvas {
+        position: relative;
+        width: 600px;
+        height: 400px;
+        border: 1px solid #ccc;
+        margin-bottom: 20px;
+        /*background-color: #f9f9f9;*/
+      }
 
-    #object {
-      position: absolute;
-      background-image: url('Images/gupxCropped.png'); /* Update with the actual file path */
-      background-size: contain;
-      background-repeat: no-repeat;
-      background-position: center;
-      transform-origin: center;
-      touch-action: none;
-    }
+      #object {
+        position: absolute;
+        background-image: url('Images/gupxCropped.png'); /* Update with the actual file path */
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        transform-origin: center;
+        touch-action: none;
+      }
 
-    #controls, #fields {
-      margin-top: 10px;
-    }
+      #controls,
+      #fields {
+        margin-top: 10px;
+      }
 
-    button {
-      margin-right: 10px;
-      padding: 6px 12px;
-    }
+      button {
+        margin-right: 10px;
+        padding: 6px 12px;
+      }
 
-    input[type="range"] {
-      width: 300px;
-      vertical-align: middle;
-    }
+      input[type='range'] {
+        width: 300px;
+        vertical-align: middle;
+      }
 
-    input[type="number"] {
-      width: 60px;
-      margin-right: 10px;
-    }
+      input[type='number'] {
+        width: 60px;
+        margin-right: 10px;
+      }
 
-    label {
-      margin-right: 5px;
-    }
+      label {
+        margin-right: 5px;
+      }
 
-    #timelineWrapper {
-      position: relative;
-      display: inline-block;
-    }
+      #timelineWrapper {
+        position: relative;
+        display: inline-block;
+      }
 
-    #markerTrack {
-      position: absolute;
-      top: 50%;
-      left: 0;
-      height: 8px;
-      width: 300px;
-      transform: translateY(-50%);
-      pointer-events: none;
-    }
+      #markerTrack {
+        position: absolute;
+        top: 50%;
+        left: 0;
+        height: 8px;
+        width: 300px;
+        transform: translateY(-50%);
+        pointer-events: none;
+      }
 
-    .marker {
-      position: absolute;
-      top: 0;
-      width: 2px;
-      height: 100%;
-      background-color: blue;
-    }
+      .marker {
+        position: absolute;
+        top: 0;
+        width: 2px;
+        height: 100%;
+        background-color: blue;
+      }
 
-    #keyframeTable {
-      margin-top: 20px;
-      border-collapse: collapse;
-      width: 100%;
-      max-width: 600px;
-    }
+      #keyframeTable {
+        margin-top: 20px;
+        border-collapse: collapse;
+        width: 100%;
+        max-width: 600px;
+      }
 
-    #keyframeTable th, #keyframeTable td {
-      border: 1px solid #ccc;
-      padding: 6px 10px;
-      text-align: center;
-    }
+      #keyframeTable th,
+      #keyframeTable td {
+        border: 1px solid #ccc;
+        padding: 6px 10px;
+        text-align: center;
+      }
 
-    #keyframeTable tr:hover {
-      background-color: #f0f8ff;
-      cursor: pointer;
-    }
+      #keyframeTable tr:hover {
+        background-color: #f0f8ff;
+        cursor: pointer;
+      }
 
-    #imagePanel {
-      position: absolute;
-      right: 20px;
-      top: 60px;
-      width: 240px;
-      background: #f8f8f8;
-      border: 1px solid #ccc;
-      padding: 12px;
-    }
+      #imagePanel {
+        position: absolute;
+        right: 20px;
+        top: 60px;
+        width: 240px;
+        background: #f8f8f8;
+        border: 1px solid #ccc;
+        padding: 12px;
+      }
 
-    #imageList {
-      list-style: none;
-      padding: 0;
-      margin: 0 0 10px 0;
-    }
+      #imageList {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 10px 0;
+      }
 
-    #backgroundPanel {
-      position: absolute;
-      right: 280px;
-      top: 60px;
-      width: 240px;
-      background: #f8f8f8;
-      border: 1px solid #ccc;
-      padding: 12px;
-    }
+      #backgroundPanel {
+        position: absolute;
+        right: 280px;
+        top: 60px;
+        width: 240px;
+        background: #f8f8f8;
+        border: 1px solid #ccc;
+        padding: 12px;
+      }
 
-    #backgroundList {
-      list-style: none;
-      padding: 0;
-      margin: 0 0 10px 0;
-    }
+      #backgroundList {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 10px 0;
+      }
 
-    .interaction-hint {
-      font-size: 24px;
-      animation: pulse 1s infinite;
-      color: red;
-      text-shadow: 0 0 5px rgba(255,0,0,0.7);
-    }
+      .interaction-hint {
+        font-size: 24px;
+        animation: pulse 1s infinite;
+        color: red;
+        text-shadow: 0 0 5px rgba(255, 0, 0, 0.7);
+      }
 
-    @keyframes pulse {
-      0%   { transform: scale(1); opacity: 1; }
-      50%  { transform: scale(1.2); opacity: 0.5; }
-      100% { transform: scale(1); opacity: 1; }
-    }
+      @keyframes pulse {
+        0% {
+          transform: scale(1);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.2);
+          opacity: 0.5;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h2>Scrubber Project Editor</h2>
 
-  </style>
-</head>
-<body>
+    <label>
+      Project Name:
+      <input
+        type="text"
+        id="projectName"
+        value="My Scrubber Project"
+        style="margin-bottom: 10px; width: 220px"
+      />
+    </label>
 
-  <h2>Scrubber Project Editor</h2>
+    <br />
 
-  <label>
-    Project Name:
-    <input type="text" id="projectName" value="My Scrubber Project" style="margin-bottom:10px; width:220px;">
-  </label>
-  
-  <br>
-
-  <!-- <div id="canvas">
-    <div id="background" style="position:absolute;top:0;left:0;width:100%;height:100%;z-index:0;"></div>
-    <div id="object" style="z-index:1;"></div>
-  </div> -->
-
-  <div id="background" style="width:600px; height:400px; background:url('my-bg.png') center/cover no-repeat;">
-    <canvas id="canvas" width="600" height="400" style="border:1px solid #ccc; display:block; margin-bottom:20px;"></canvas>
-  </div>
-
-  <div id="controls">
-    <div id="timelineWrapper">
-      <input type="range" id="timeline" min="0" max="200" value="0">
-      <div id="markerTrack"></div>
+    <div
+      id="background"
+      style="width: 600px; height: 400px; background: url('my-bg.png') center/cover no-repeat"
+    >
+      <canvas
+        id="canvas"
+        width="600"
+        height="400"
+        style="border: 1px solid #ccc; display: block; margin-bottom: 20px"
+      ></canvas>
     </div>
-    <button id="addKeyframe">Add Keyframe</button>
-    <button id="togglePlay">Play</button>
-    <button id="changeImageBtn">Change Image</button>
-    <button id="resetBtn">Reset</button>
-    <button id="saveBtn">Save</button>
-    <button id="loadBtn">Load</button>
-    <button id="increaseTimeBtn">+100</button>
-    <button id="decreaseTimeBtn">-100</button>
-    <input type="file" id="imageInput" accept="image/*" style="display:none;">
-    <input type="file" id="loadInput" accept=".json" style="display:none;">
-    <button onclick="addBackgroundKeyframe()">Add Background Keyframe</button>
-  </div>
 
-  <div id="fields">
-    <label>X: <input type="number" id="inputX"></label>
-    <label>Y: <input type="number" id="inputY"></label>
-    <label>Rotation: <input type="number" id="inputRotation"></label>
-    <label>Size: <input type="number" id="inputSize"></label>
-    <label>Opacity: <input type="number" id="inputOpacity" min="0" max="100" step="1"></label>
-    <label>Visible: <input type="checkbox" id="inputVisible"></label>
-    <label>Mirror: <input type="checkbox" id="inputMirror"></label>
-    <label>Image: 
-      <select id="imageSelect"></select>
+    <div id="controls">
+      <div id="timelineWrapper">
+        <input type="range" id="timeline" min="0" max="200" value="0" />
+        <div id="markerTrack"></div>
+      </div>
+      <button id="addKeyframe">Add Keyframe</button>
+      <button id="togglePlay">Play</button>
+      <button id="changeImageBtn">Change Image</button>
+      <button id="resetBtn">Reset</button>
+      <button id="saveBtn">Save</button>
+      <button id="loadBtn">Load</button>
+      <button id="increaseTimeBtn">+100</button>
+      <button id="decreaseTimeBtn">-100</button>
+      <input type="file" id="imageInput" accept="image/*" style="display: none" />
+      <input type="file" id="loadInput" accept=".json" style="display: none" />
+      <button onclick="addBackgroundKeyframe()">Add Background Keyframe</button>
+      <button onclick="jumpToEnd()">&gt;|</button>
+      <button onclick="jumpToStart()">|&lt;</button>
+    </div>
+
+    <div id="fields">
+      <label>X: <input type="number" id="inputX" /></label>
+      <label>Y: <input type="number" id="inputY" /></label>
+      <label>Rotation: <input type="number" id="inputRotation" /></label>
+      <label>Size: <input type="number" id="inputSize" /></label>
+      <label>Opacity: <input type="number" id="inputOpacity" min="0" max="100" step="1" /></label>
+      <label>Visible: <input type="checkbox" id="inputVisible" /></label>
+      <label>Mirror: <input type="checkbox" id="inputMirror" /></label>
+      <label
+        >Image:
+        <select id="imageSelect"></select>
+      </label>
+      <!-- New interaction fields -->
+      <label
+        >Interaction Required:
+        <input type="checkbox" id="inputInteractionEnabled" />
+      </label>
+
+      <label
+        >Interaction Type:
+        <select id="inputInteractionType">
+          <option value="click">Click</option>
+          <!-- more interaction types later -->
+        </select>
+      </label>
+
+      <label
+        >Interaction Received:
+        <input type="checkbox" id="inputInteractionReceived" />
+      </label>
+    </div>
+
+    <div id="imagePanel">
+      <h4 style="margin-top: 0">Object Images</h4>
+      <ul id="imageList" style="list-style: none; padding: 0; margin: 0 0 10px 0"></ul>
+      <input type="file" id="addImageInput" accept="image/*" style="display: none" />
+      <button id="addImageBtn" style="width: 100%">Add Image</button>
+    </div>
+
+    <div id="backgroundPanel">
+      <h4 style="margin-top: 0">Backgrounds</h4>
+      <ul id="backgroundList" style="list-style: none; padding: 0; margin: 0 0 10px 0"></ul>
+      <input type="file" id="addBackgroundInput" accept="image/*" style="display: none" />
+      <button id="addBackgroundBtn" style="width: 100%">Add Background</button>
+    </div>
+
+    <div
+      id="objectListPanel"
+      style="
+        position: absolute;
+        right: 540px;
+        top: 60px;
+        width: 180px;
+        background: #f8f8f8;
+        border: 1px solid #ccc;
+        padding: 12px;
+      "
+    >
+      <h4 style="margin-top: 0">Objects</h4>
+      <ul id="objectList" style="list-style: none; padding: 0; margin: 0 0 10px 0"></ul>
+      <button id="addObjectBtn" style="width: 100%">Add Object</button>
+    </div>
+
+    <table id="keyframeTable">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>X</th>
+          <th>Y</th>
+          <th>Rotation</th>
+          <th>Size</th>
+          <th>Opacity</th>
+          <th>Visible</th>
+          <th>Mirror</th>
+          <th>Image</th>
+          <th>Itrct Rqd</th>
+          <th>Itype</th>
+          <th>Itrct Rcv</th>
+          <th>Delete</th>
+          <th>Up/Dwn</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Keyframes go here -->
+      </tbody>
+    </table>
+
+    <!-- Add background keyframe table -->
+    <table id="backgroundKeyframeTable">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Background</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- Background keyframes go here -->
+      </tbody>
+    </table>
+
+    <label style="margin-left: 10px">
+      <input type="checkbox" id="showAllObjectsCheckbox" />
+      Show all objects when scrubbing
     </label>
-    <!-- New interaction fields -->
-    <label>Interaction Required: 
-      <input type="checkbox" id="inputInteractionEnabled">
-    </label>
 
-    <label>Interaction Type: 
-      <select id="inputInteractionType">
-        <option value="click">Click</option>
-        <!-- more interaction types later -->
-      </select>
-    </label>
+    <script>
+      const showAllObjectsCheckbox = document.getElementById('showAllObjectsCheckbox');
 
-    <label>Interaction Received: 
-      <input type="checkbox" id="inputInteractionReceived">
-    </label>
-  </div>
+      let pausedForInteraction = false;
 
-  <div id="imagePanel">
-    <h4 style="margin-top:0;">Object Images</h4>
-    <ul id="imageList" style="list-style:none; padding:0; margin:0 0 10px 0;"></ul>
-    <input type="file" id="addImageInput" accept="image/*" style="display:none;">
-    <button id="addImageBtn" style="width:100%;">Add Image</button>
-  </div>
+      class AnimationObject {
+        static allObjects = []; // keep track of all instances
+        static canvas = null;
+        static ctx = null;
+        static initialized = false;
 
-  <div id="backgroundPanel">
-    <h4 style="margin-top:0;">Backgrounds</h4>
-    <ul id="backgroundList" style="list-style:none; padding:0; margin:0 0 10px 0;"></ul>
-    <input type="file" id="addBackgroundInput" accept="image/*" style="display:none;">
-    <button id="addBackgroundBtn" style="width:100%;">Add Background</button>
-  </div>
+        constructor({
+          id,
+          name,
+          x = 100,
+          y = 100,
+          size = 50,
+          rotation = 0,
+          opacity = 1,
+          visible = true,
+          mirror = false,
+          imageId = 1,
+          keyframes = [],
+          images = [{ id: 1, label: 'Default', url: '' }],
+          sounds = [], // NEW: [{ id, label, url }]
+          interactionEnabled = false, // NEW: does this object require interaction?
+          interactionType = 'click', // NEW: what kind of interaction ("click", later "hover", "keypress"...)
+          interactionReceived = false, // NEW: has the interaction been received?
+          InteractionFlagSeen = false,
+        }) {
+          this.id = id;
+          this.name = name;
+          this.x = x;
+          this.y = y;
+          this.size = size;
+          this.rotation = rotation;
+          this.opacity = opacity;
+          this.visible = visible;
+          this.mirror = mirror;
+          this.imageId = imageId;
+          this.keyframes = keyframes; // [{...}]
+          this.images = images; // [{id, label, url}]
+          this.sounds = sounds; // store original sound data
+          this._audioElements = {}; // preload audio
+          this.interactionEnabled = interactionEnabled;
+          this.interactionType = interactionType;
+          this.InteractionFlagSeen = InteractionFlagSeen;
 
-  <div id="objectListPanel" style="position:absolute; right:540px; top:60px; width:180px; background:#f8f8f8; border:1px solid #ccc; padding:12px;">
-    <h4 style="margin-top:0;">Objects</h4>
-    <ul id="objectList" style="list-style:none; padding:0; margin:0 0 10px 0;"></ul>
-    <button id="addObjectBtn" style="width:100%;">Add Object</button>
-  </div>
+          for (const sound of sounds) {
+            if (sound.url) {
+              const audio = new Audio(sound.url);
+              audio.loop = !!sound.loop; // enable looping
+              audio.volume =
+                sound.volume !== undefined // set volume
+                  ? Math.max(0, Math.min(1, sound.volume)) // clamp to [0, 1]
+                  : 1.0;
 
-  <table id="keyframeTable">
-    <thead>
-      <tr>
-        <th>Time</th>
-        <th>X</th>
-        <th>Y</th>
-        <th>Rotation</th>
-        <th>Size</th>
-        <th>Opacity</th>
-        <th>Visible</th>
-        <th>Mirror</th>
-        <th>Image</th>
-        <th>Itrct Rqd</th>
-        <th>Itype</th>
-        <th>Itrct Rcv</th>
-        <th>Delete</th>
-        <th>Up/Dwn</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Keyframes go here -->
-    </tbody>
-  </table>
-
-  <!-- Add background keyframe table -->
-  <table id="backgroundKeyframeTable">
-    <thead>
-      <tr>
-        <th>Time</th>
-        <th>Background</th>
-        <th>Action</th>
-      </tr>
-    </thead>
-    <tbody>
-      <!-- Background keyframes go here -->
-    </tbody>
-  </table>
-
-  <label style="margin-left:10px;">
-    <input type="checkbox" id="showAllObjectsCheckbox">
-    Show all objects when scrubbing
-  </label>
-
-  <script>
-
-    const showAllObjectsCheckbox = document.getElementById("showAllObjectsCheckbox");
-
-    let pausedForInteraction = false;
-
-    class AnimationObject {
-
-      static allObjects = []; // keep track of all instances
-      static canvas = null;
-      static ctx = null;
-      static initialized = false;
-      
-      constructor({
-        id,
-        name,
-        x = 100,
-        y = 100,
-        size = 50,
-        rotation = 0,
-        opacity = 1,
-        visible = true,
-        mirror = false,
-        imageId = 1,
-        keyframes = [],
-        images = [{ id: 1, label: "Default", url: "" }],
-        sounds = [], // NEW: [{ id, label, url }]
-        interactionEnabled = false,     // NEW: does this object require interaction?
-        interactionType = "click",       // NEW: what kind of interaction ("click", later "hover", "keypress"...)
-        interactionReceived = false,  // NEW: has the interaction been received?
-        InteractionFlagSeen = false
-      }) {
-        this.id = id;
-        this.name = name;
-        this.x = x;
-        this.y = y;
-        this.size = size;
-        this.rotation = rotation;
-        this.opacity = opacity;
-        this.visible = visible;
-        this.mirror = mirror;
-        this.imageId = imageId;
-        this.keyframes = keyframes; // [{...}]
-        this.images = images;       // [{id, label, url}]
-        this.sounds = sounds; // store original sound data
-        this._audioElements = {}; // preload audio
-        this.interactionEnabled = interactionEnabled;
-        this.interactionType = interactionType;
-        this.InteractionFlagSeen = InteractionFlagSeen;
-
-        for (const sound of sounds) {
-          if (sound.url) {
-            const audio = new Audio(sound.url);
-            audio.loop = !!sound.loop;                      // enable looping
-            audio.volume = sound.volume !== undefined       // set volume
-              ? Math.max(0, Math.min(1, sound.volume))      // clamp to [0, 1]
-              : 1.0;
-
-            this._audioElements[sound.id] = audio;
-          }
-        }
-
-        // Initialize canvas once
-        if (!AnimationObject.initialized) {
-          AnimationObject.createCanvas();
-        }
-
-        AnimationObject.allObjects.push(this);
-
-        // For dragging
-        this.isDragging = false;
-        this.offsetX = 0;
-        this.offsetY = 0;
-
-        // Object interaction hint code
-        this._hintEl = document.createElement("div");
-        this._hintEl.className = "interaction-hint";
-        this._hintEl.innerText = "👆"; 
-        this._hintEl.style.position = "absolute";
-        this._hintEl.style.pointerEvents = "none";
-        this._hintEl.style.display = "none";
-
-        AnimationObject.canvas.parentElement.appendChild(this._hintEl);
-
-        // Register events
-        this.registerEvents();
-
-      }
-      getState() {
-        return {
-          x: this.x,
-          y: this.y,
-          size: this.size,
-          rotation: this.rotation,
-          opacity: this.opacity,
-          visible: this.visible,
-          mirror: this.mirror,
-          imageId: this.imageId,
-          interactionEnabled: this.interactionEnabled,
-          interactionType: this.interactionType,
-          interactionReceived: this.interactionReceived,
-          InteractionFlagSeen: this.InteractionFlagSeen
-        };
-      }
-
-       static createCanvas() {
-        AnimationObject.canvas = document.getElementById("canvas");
-        //const container = document.getElementById("canvasContainer");
-        //CanvasObject.canvas = document.createElement("canvas");
-        //CanvasObject.canvas.width = 600;
-        //CanvasObject.canvas.height = 400;
-        //container.appendChild(CanvasObject.canvas);
-        AnimationObject.ctx = AnimationObject.canvas.getContext("2d");
-        AnimationObject.initialized = true;
-
-        // Start render loop
-        requestAnimationFrame(AnimationObject.renderAll);
-      }
-
-      registerEvents() {
-        const canvas = AnimationObject.canvas;
-
-        // Support both mouse and touch
-        const getPos = (evt) => {
-          if (evt.touches && evt.touches.length > 0) {
-            const rect = canvas.getBoundingClientRect();
-            return {
-              x: evt.touches[0].clientX - rect.left,
-              y: evt.touches[0].clientY - rect.top
-            };
-          } else {
-            const rect = canvas.getBoundingClientRect();
-            return {
-              x: evt.clientX - rect.left,
-              y: evt.clientY - rect.top
-            };
-          }
-        };
-
-        canvas.addEventListener("mousedown", (evt) => {
-          const pos = getPos(evt);
-
-          if (this.interactionEnabled && this.interactionType === "click" && this.hitTest(pos.x, pos.y)) {
-            console.log(`Interaction triggered on object ${this.id} (${this.name})`);
-            this.interactionReceived = true; // mark interaction received
-            this.interactionEnabled = false; // disable further interaction until reset
-             resumeTimeline();
-            // Example: pause timeline here
-            /* if (typeof pauseTimeline === "function") {
-              pauseTimeline(this); // let your global timeline code handle it
-            } */
+              this._audioElements[sound.id] = audio;
+            }
           }
 
-          if (this.hitTest(pos.x, pos.y)) {
-            this.isDragging = true;
-            this.offsetX = pos.x - this.x;
-            this.offsetY = pos.y - this.y;
+          // Initialize canvas once
+          if (!AnimationObject.initialized) {
+            AnimationObject.createCanvas();
           }
-        });
 
-        canvas.addEventListener("mousemove", (evt) => {
-          if (this.isDragging) {
-            const pos = getPos(evt);
-            this.x = pos.x - this.offsetX;
-            this.y = pos.y - this.offsetY;
-            applyState(this.getState());
-          }
-        });
+          AnimationObject.allObjects.push(this);
 
-        canvas.addEventListener("mouseup", () => {
+          // For dragging
           this.isDragging = false;
-        });
+          this.offsetX = 0;
+          this.offsetY = 0;
 
-        // Touch support
-        canvas.addEventListener("touchstart", (evt) => {
-          const pos = getPos(evt);
-          if (this.hitTest(pos.x, pos.y)) {
-            this.isDragging = true;
-            this.offsetX = pos.x - this.x;
-            this.offsetY = pos.y - this.y;
-          }
-        });
+          // Object interaction hint code
+          this._hintEl = document.createElement('div');
+          this._hintEl.className = 'interaction-hint';
+          this._hintEl.innerText = '👆';
+          this._hintEl.style.position = 'absolute';
+          this._hintEl.style.pointerEvents = 'none';
+          this._hintEl.style.display = 'none';
 
-        canvas.addEventListener("touchmove", (evt) => {
-          if (this.isDragging) {
-            evt.preventDefault();
-            const pos = getPos(evt);
-            this.x = pos.x - this.offsetX;
-            this.y = pos.y - this.offsetY;
-            applyState(this.getState());
-          }
-        });
+          AnimationObject.canvas.parentElement.appendChild(this._hintEl);
 
-        canvas.addEventListener("touchend", () => {
-          this.isDragging = false;
-        });
-      }
-
-       hitTest(px, py) {
-        return (
-          px > this.x - this.size / 2 &&
-          px < this.x + this.size / 2 &&
-          py > this.y - this.size / 2 &&
-          py < this.y + this.size / 2
-        );
-      }
-
-      draw(ctx) {
-        if (!this.visible) return;
-
-        // Find the image for this object
-        const imgData = this.images.find(i => i.id === this.imageId) || this.images[0];
-        if (!imgData || !imgData.url) return;
-
-        // Create or reuse an Image object for drawing
-        if (!this._imgElement) {
-          this._imgElement = new window.Image();
-          this._imgElement.src = imgData.url;
+          // Register events
+          this.registerEvents();
         }
-        // If the image changed, update src
-        if (this._imgElement.src !== imgData.url) {
-          this._imgElement.src = imgData.url;
+        getState() {
+          return {
+            x: this.x,
+            y: this.y,
+            size: this.size,
+            rotation: this.rotation,
+            opacity: this.opacity,
+            visible: this.visible,
+            mirror: this.mirror,
+            imageId: this.imageId,
+            interactionEnabled: this.interactionEnabled,
+            interactionType: this.interactionType,
+            interactionReceived: this.interactionReceived,
+            InteractionFlagSeen: this.InteractionFlagSeen,
+          };
         }
 
-        // Only draw if the image is loaded
-        if (!this._imgElement.complete || !this._imgElement.naturalWidth) return;
+        static createCanvas() {
+          AnimationObject.canvas = document.getElementById('canvas');
+          AnimationObject.ctx = AnimationObject.canvas.getContext('2d');
+          AnimationObject.initialized = true;
 
-        ctx.save();
-        ctx.globalAlpha = this.opacity;
-        ctx.translate(this.x, this.y);
-        ctx.rotate(this.rotation * Math.PI / 180);
-        ctx.scale(this.mirror ? -1 : 1, 1);
-
-        // --- Aspect ratio preserving draw (like background-size: contain) ---
-        const size = this.size;
-        const iw = this._imgElement.naturalWidth;
-        const ih = this._imgElement.naturalHeight;
-        let drawW = size, drawH = size;
-        if (iw > ih) {
-          drawH = size * (ih / iw);
-        } else if (ih > iw) {
-          drawW = size * (iw / ih);
+          // Start render loop
+          requestAnimationFrame(AnimationObject.renderAll);
         }
-        ctx.drawImage(this._imgElement, -drawW / 2, -drawH / 2, drawW, drawH);
 
-        ctx.restore();
+        registerEvents() {
+          const canvas = AnimationObject.canvas;
 
-        /* // --- Update CSS hint ---
-        if (this.interactionEnabled && !this.interactionReceived) {
-          const rect = AnimationObject.canvas.getBoundingClientRect();
-          const scaleX = rect.width / AnimationObject.canvas.width;
-          const scaleY = rect.height / AnimationObject.canvas.height;
-
-          // Object center in DOM space
-          const domX = rect.left + this.x * scaleX;
-          const domY = rect.top + this.y * scaleY;
-
-          // Use the actual drawn width/height for placement
-          const domW = drawW * scaleX;
-          const domH = drawH * scaleY;
-
-          this._hintEl.style.display = "block";
-
-          // Center hint above the object bounding box
-          this._hintEl.style.left = `${domX - domW / 2}px`;
-          this._hintEl.style.top  = `${domY - domH / 2 - 20}px`; // hover above by 20px
-        } else {
-          this._hintEl.style.display = "none";
-        } */
-
-        // --- Update CSS hint ---
-        if (pausedForInteraction && this.interactionEnabled && !this.interactionReceived) {
-          const rect = AnimationObject.canvas.getBoundingClientRect();
-          const scrollX = window.scrollX || window.pageXOffset;
-          const scrollY = window.scrollY || window.pageYOffset;
-          const scaleX = rect.width / AnimationObject.canvas.width;
-          const scaleY = rect.height / AnimationObject.canvas.height;
-
-          // Function to transform local coords -> world coords
-          const transformPoint = (px, py) => {
-            const angle = this.rotation * Math.PI / 180;
-            const cos = Math.cos(angle);
-            const sin = Math.sin(angle);
-            const mx = this.mirror ? -1 : 1;
-
-            // Apply mirror, rotation, then translate
-            const x = px * mx * cos - py * sin + this.x;
-            const y = px * mx * sin + py * cos + this.y;
-            return { x, y };
+          // Support both mouse and touch
+          const getPos = (evt) => {
+            if (evt.touches && evt.touches.length > 0) {
+              const rect = canvas.getBoundingClientRect();
+              return {
+                x: evt.touches[0].clientX - rect.left,
+                y: evt.touches[0].clientY - rect.top,
+              };
+            } else {
+              const rect = canvas.getBoundingClientRect();
+              return {
+                x: evt.clientX - rect.left,
+                y: evt.clientY - rect.top,
+              };
+            }
           };
 
-          // Four corners of the drawn rect (local space)
-          const halfW = drawW / 2;
-          const halfH = drawH / 2;
-          const corners = [
-            transformPoint(-halfW, -halfH),
-            transformPoint( halfW, -halfH),
-            transformPoint( halfW,  halfH),
-            transformPoint(-halfW,  halfH)
-          ];
+          canvas.addEventListener('mousedown', (evt) => {
+            const pos = getPos(evt);
 
-          // Bounding box in world space
-          const minX = Math.min(...corners.map(c => c.x));
-          const maxX = Math.max(...corners.map(c => c.x));
-          const minY = Math.min(...corners.map(c => c.y));
-          const maxY = Math.max(...corners.map(c => c.y));
+            if (
+              this.interactionEnabled &&
+              this.interactionType === 'click' &&
+              this.hitTest(pos.x, pos.y)
+            ) {
+              console.log(`Interaction triggered on object ${this.id} (${this.name})`);
+              this.interactionReceived = true; // mark interaction received
+              this.interactionEnabled = false; // disable further interaction until reset
+              resumeTimeline();
+            }
 
-          // Convert to DOM coords
-          const domMinX = rect.left + minX * scaleX;
-          const domMaxX = rect.left + maxX * scaleX;
-          const domMinY = rect.top  + minY * scaleY;
-          const domMaxY = rect.top  + maxY * scaleY;
+            if (this.hitTest(pos.x, pos.y)) {
+              this.isDragging = true;
+              this.offsetX = pos.x - this.x;
+              this.offsetY = pos.y - this.y;
+            }
+          });
 
-          const domCenterX = (domMinX + domMaxX) / 2;
-          const domTopY = domMinY;
+          canvas.addEventListener('mousemove', (evt) => {
+            if (this.isDragging) {
+              const pos = getPos(evt);
+              this.x = pos.x - this.offsetX;
+              this.y = pos.y - this.offsetY;
+              applyState(this.getState());
+            }
+          });
 
-          this._hintEl.style.display = "block";
-          this._hintEl.style.left = `${domCenterX - this._hintEl.offsetWidth / 2 + scrollX}px`;
-          this._hintEl.style.top  = `${domTopY - this._hintEl.offsetHeight - 8 + scrollY}px`; // 8px above
-        } else {
-          this._hintEl.style.display = "none";
+          canvas.addEventListener('mouseup', () => {
+            this.isDragging = false;
+          });
+
+          // Touch support
+          canvas.addEventListener('touchstart', (evt) => {
+            const pos = getPos(evt);
+            if (this.hitTest(pos.x, pos.y)) {
+              this.isDragging = true;
+              this.offsetX = pos.x - this.x;
+              this.offsetY = pos.y - this.y;
+            }
+          });
+
+          canvas.addEventListener('touchmove', (evt) => {
+            if (this.isDragging) {
+              evt.preventDefault();
+              const pos = getPos(evt);
+              this.x = pos.x - this.offsetX;
+              this.y = pos.y - this.offsetY;
+              applyState(this.getState());
+            }
+          });
+
+          canvas.addEventListener('touchend', () => {
+            this.isDragging = false;
+          });
         }
 
-      }
-
-       static renderAll() {
-        const ctx = AnimationObject.ctx;
-        ctx.clearRect(0, 0, AnimationObject.canvas.width, AnimationObject.canvas.height);
-
-        for (const obj of AnimationObject.allObjects) {
-          obj.draw(ctx);
+        hitTest(px, py) {
+          return (
+            px > this.x - this.size / 2 &&
+            px < this.x + this.size / 2 &&
+            py > this.y - this.size / 2 &&
+            py < this.y + this.size / 2
+          );
         }
 
-        requestAnimationFrame(AnimationObject.renderAll);
-      }
+        draw(ctx) {
+          if (!this.visible) return;
 
-      playSoundById(id) {
-        const audio = this._audioElements[id];
-        if (audio) {
-          audio.pause();           // avoid overlap
-          audio.currentTime = 0;
-          audio.play().catch(err => console.warn("Audio play error:", err));
-        } else {
-          console.warn(`Sound with id ${id} not found`);
-        }
-      }
+          // Find the image for this object
+          const imgData = this.images.find((i) => i.id === this.imageId) || this.images[0];
+          if (!imgData || !imgData.url) return;
 
-      stopSoundById(id) {
-        const audio = this._audioElements[id];
-        if (audio) {
-          audio.pause();           // stop playback
-          audio.currentTime = 0;   // reset to start
-        } else {
-          console.warn(`Sound with id ${id} not found`);
-        }
-      }
-
-      setSoundVolumeById(id, volume) {
-        const audio = this._audioElements[id];
-        if (audio) {
-          audio.volume = Math.max(0, Math.min(1, volume)); // clamp to [0, 1]
-        } else {
-          console.warn(`Sound with id ${id} not found`);
-        }
-      }
-
-    }
-
-    
-
-    const object = document.getElementById("object");
-    const timeline = document.getElementById("timeline");
-    const addKeyframeBtn = document.getElementById("addKeyframe");
-    const togglePlayBtn = document.getElementById("togglePlay");
-    const changeImageBtn = document.getElementById("changeImageBtn");
-    const resetBtn = document.getElementById("resetBtn");
-    const imageInput = document.getElementById("imageInput");
-    const addImageInput = document.getElementById("addImageInput");
-    const loadInput = document.getElementById("loadInput");
-
-    const inputX = document.getElementById("inputX");
-    const inputY = document.getElementById("inputY");
-    const inputRotation = document.getElementById("inputRotation");
-    const inputSize = document.getElementById("inputSize");
-    const inputOpacity = document.getElementById("inputOpacity");
-    const inputVisible = document.getElementById("inputVisible");
-    const inputMirror = document.getElementById("inputMirror");
-    const inputInteractionEnabled = document.getElementById("inputInteractionEnabled");   // NEW
-    const inputInteractionType = document.getElementById("inputInteractionType");         // NEW
-    const inputInteractionReceived = document.getElementById("inputInteractionReceived"); // NEW
-
-    const markerTrack = document.getElementById("markerTrack");
-    const keyframeTable = document.getElementById("keyframeTable").querySelector("tbody");
-    const backgroundKeyframeTable = document.getElementById("backgroundKeyframeTable").querySelector("tbody");
-
-    const imageSelect = document.getElementById("imageSelect");
-
-    const objectList = document.getElementById("objectList");
-    const addObjectBtn = document.getElementById("addObjectBtn");
-    const canvas = document.getElementById("canvas");
-
-    const imagePanel = document.getElementById("imagePanel");
-    const imageList = document.getElementById("imageList");
-    const addImageBtn = document.getElementById("addImageBtn");
-
-    const animationObjects = [
-      new AnimationObject({
-        id: 1,
-        name: "Object 1",
-        x: 100,
-        y: 100,
-        size: 50,
-        rotation: 0,
-        opacity: 1,
-        visible: true,
-        mirror: false,
-        imageId: 1,
-        keyframes: [],
-        images: [
-          { id: 1, label: "Default", url: "Images/gupxCropped.png" }
-        ],
-        sounds: [
-          {
-            id: 1,
-            label: "Default Sound",
-            url: "sounds/default.mp3",
-            loop: false,
-            volume: 1.0
+          // Create or reuse an Image object for drawing
+          if (!this._imgElement) {
+            this._imgElement = new window.Image();
+            this._imgElement.src = imgData.url;
           }
-        ],
-        interactionEnabled: false,
-        interactionType: "click",
-        interactionReceived: false,
-        InteractionFlagSeen: false
-      })
-    ];
+          // If the image changed, update src
+          if (this._imgElement.src !== imgData.url) {
+            this._imgElement.src = imgData.url;
+          }
 
-    let selectedObject = 0; // Index of the currently selected object, we use this to track which object is in use in the array
+          // Only draw if the image is loaded
+          if (!this._imgElement.complete || !this._imgElement.naturalWidth) return;
 
-    // Store images as {id, label, url}
-    let objectImages = [
-      { id: 1, label: "Default", url: "Images/gupxCropped.png" }
-    ];
-    let nextImageId = 2; // for unique IDs
+          ctx.save();
+          ctx.globalAlpha = this.opacity;
+          ctx.translate(this.x, this.y);
+          ctx.rotate((this.rotation * Math.PI) / 180);
+          ctx.scale(this.mirror ? -1 : 1, 1);
 
-    let currentTime = 0;
-    let playing = false;
-    let playInterval;
+          // --- Aspect ratio preserving draw (like background-size: contain) ---
+          const size = this.size;
+          const iw = this._imgElement.naturalWidth;
+          const ih = this._imgElement.naturalHeight;
+          let drawW = size,
+            drawH = size;
+          if (iw > ih) {
+            drawH = size * (ih / iw);
+          } else if (ih > iw) {
+            drawW = size * (iw / ih);
+          }
+          ctx.drawImage(this._imgElement, -drawW / 2, -drawH / 2, drawW, drawH);
 
-    const keyframes = [];
+          ctx.restore();
 
-    let currentState = {
-      x: 100,
-      y: 100,
-      size: 50,
-      rotation: 0,
-      opacity: 1,
-      visible: true,
-      mirror: false,
-      imageId: 1 // <-- add this
-    };
+          // --- Update CSS hint ---
+          if (pausedForInteraction && this.interactionEnabled && !this.interactionReceived) {
+            const rect = AnimationObject.canvas.getBoundingClientRect();
+            const scrollX = window.scrollX || window.pageXOffset;
+            const scrollY = window.scrollY || window.pageYOffset;
+            const scaleX = rect.width / AnimationObject.canvas.width;
+            const scaleY = rect.height / AnimationObject.canvas.height;
 
-    let selectedKeyframeIndex = null; // <-- add this
+            // Function to transform local coords -> world coords
+            const transformPoint = (px, py) => {
+              const angle = (this.rotation * Math.PI) / 180;
+              const cos = Math.cos(angle);
+              const sin = Math.sin(angle);
+              const mx = this.mirror ? -1 : 1;
 
-    let backgroundImages = [
-      { id: 1, label: "Default BG", url: "Backgrounds/Default.webp" }
-    ];
-    let nextBackgroundImageId = 2;
+              // Apply mirror, rotation, then translate
+              const x = px * mx * cos - py * sin + this.x;
+              const y = px * mx * sin + py * cos + this.y;
+              return { x, y };
+            };
 
-    let backgroundKeyframes = [
-      // { time: 0, imageId: 1 }
-    ];
+            // Four corners of the drawn rect (local space)
+            const halfW = drawW / 2;
+            const halfH = drawH / 2;
+            const corners = [
+              transformPoint(-halfW, -halfH),
+              transformPoint(halfW, -halfH),
+              transformPoint(halfW, halfH),
+              transformPoint(-halfW, halfH),
+            ];
 
-    let currentBackground = {
-      imageId: 1
-    };
+            // Bounding box in world space
+            const minX = Math.min(...corners.map((c) => c.x));
+            const maxX = Math.max(...corners.map((c) => c.x));
+            const minY = Math.min(...corners.map((c) => c.y));
+            const maxY = Math.max(...corners.map((c) => c.y));
 
-    // Helper to create a new AnimationObject with defaults
-    function createDefaultAnimationObject(id, name = "Object " + id) {
-      return new AnimationObject({
-        id,
-        name,
+            // Convert to DOM coords
+            const domMinX = rect.left + minX * scaleX;
+            const domMaxX = rect.left + maxX * scaleX;
+            const domMinY = rect.top + minY * scaleY;
+            const domMaxY = rect.top + maxY * scaleY;
+
+            const domCenterX = (domMinX + domMaxX) / 2;
+            const domTopY = domMinY;
+
+            this._hintEl.style.display = 'block';
+            this._hintEl.style.left = `${domCenterX - this._hintEl.offsetWidth / 2 + scrollX}px`;
+            this._hintEl.style.top = `${domTopY - this._hintEl.offsetHeight - 8 + scrollY}px`; // 8px above
+          } else {
+            this._hintEl.style.display = 'none';
+          }
+        }
+
+        static renderAll() {
+          const ctx = AnimationObject.ctx;
+          ctx.clearRect(0, 0, AnimationObject.canvas.width, AnimationObject.canvas.height);
+
+          for (const obj of AnimationObject.allObjects) {
+            obj.draw(ctx);
+          }
+
+          requestAnimationFrame(AnimationObject.renderAll);
+        }
+
+        playSoundById(id) {
+          const audio = this._audioElements[id];
+          if (audio) {
+            audio.pause(); // avoid overlap
+            audio.currentTime = 0;
+            audio.play().catch((err) => console.warn('Audio play error:', err));
+          } else {
+            console.warn(`Sound with id ${id} not found`);
+          }
+        }
+
+        stopSoundById(id) {
+          const audio = this._audioElements[id];
+          if (audio) {
+            audio.pause(); // stop playback
+            audio.currentTime = 0; // reset to start
+          } else {
+            console.warn(`Sound with id ${id} not found`);
+          }
+        }
+
+        setSoundVolumeById(id, volume) {
+          const audio = this._audioElements[id];
+          if (audio) {
+            audio.volume = Math.max(0, Math.min(1, volume)); // clamp to [0, 1]
+          } else {
+            console.warn(`Sound with id ${id} not found`);
+          }
+        }
+      }
+
+      // this is a comment
+      // this is another comment
+      // and one more
+
+      const object = document.getElementById('object');
+      const timeline = document.getElementById('timeline');
+      const addKeyframeBtn = document.getElementById('addKeyframe');
+      const togglePlayBtn = document.getElementById('togglePlay');
+      const changeImageBtn = document.getElementById('changeImageBtn');
+      const resetBtn = document.getElementById('resetBtn');
+      const imageInput = document.getElementById('imageInput');
+      const addImageInput = document.getElementById('addImageInput');
+      const loadInput = document.getElementById('loadInput');
+
+      const inputX = document.getElementById('inputX');
+      const inputY = document.getElementById('inputY');
+      const inputRotation = document.getElementById('inputRotation');
+      const inputSize = document.getElementById('inputSize');
+      const inputOpacity = document.getElementById('inputOpacity');
+      const inputVisible = document.getElementById('inputVisible');
+      const inputMirror = document.getElementById('inputMirror');
+      const inputInteractionEnabled = document.getElementById('inputInteractionEnabled'); // NEW
+      const inputInteractionType = document.getElementById('inputInteractionType'); // NEW
+      const inputInteractionReceived = document.getElementById('inputInteractionReceived'); // NEW
+
+      const markerTrack = document.getElementById('markerTrack');
+      const keyframeTable = document.getElementById('keyframeTable').querySelector('tbody');
+      const backgroundKeyframeTable = document
+        .getElementById('backgroundKeyframeTable')
+        .querySelector('tbody');
+
+      const imageSelect = document.getElementById('imageSelect');
+
+      const objectList = document.getElementById('objectList');
+      const addObjectBtn = document.getElementById('addObjectBtn');
+      const canvas = document.getElementById('canvas');
+
+      const imagePanel = document.getElementById('imagePanel');
+      const imageList = document.getElementById('imageList');
+      const addImageBtn = document.getElementById('addImageBtn');
+
+      const animationObjects = [
+        new AnimationObject({
+          id: 1,
+          name: 'Object 1',
+          x: 100,
+          y: 100,
+          size: 50,
+          rotation: 0,
+          opacity: 1,
+          visible: true,
+          mirror: false,
+          imageId: 1,
+          keyframes: [],
+          images: [{ id: 1, label: 'Default', url: 'Images/gupxCropped.png' }],
+          sounds: [
+            {
+              id: 1,
+              label: 'Default Sound',
+              url: 'sounds/default.mp3',
+              loop: false,
+              volume: 1.0,
+            },
+          ],
+          interactionEnabled: false,
+          interactionType: 'click',
+          interactionReceived: false,
+          InteractionFlagSeen: false,
+        }),
+      ];
+
+      let selectedObject = 0; // Index of the currently selected object, we use this to track which object is in use in the array
+
+      // Store images as {id, label, url}
+      let objectImages = [{ id: 1, label: 'Default', url: 'Images/gupxCropped.png' }];
+      let nextImageId = 2; // for unique IDs
+
+      let currentTime = 0;
+      let playing = false;
+      let playInterval;
+
+      const keyframes = [];
+
+      let currentState = {
         x: 100,
         y: 100,
         size: 50,
@@ -757,1036 +730,987 @@
         opacity: 1,
         visible: true,
         mirror: false,
+        imageId: 1, // <-- add this
+      };
+
+      let selectedKeyframeIndex = null; // <-- add this
+
+      let backgroundImages = [{ id: 1, label: 'Default BG', url: 'Backgrounds/Default.webp' }];
+      let nextBackgroundImageId = 2;
+
+      let backgroundKeyframes = [
+        // { time: 0, imageId: 1 }
+      ];
+
+      let currentBackground = {
         imageId: 1,
-        keyframes: [],
-        images: [
-          { id: 1, label: "Default", url: "Images/gupxCropped.png" }
-        ],
-        interactionEnabled: false,
-        interactionType: "click",
-        interactionReceived: false,
-        InteractionFlagSeen: false
-      });
-    }
+      };
 
-  /*   // Render the object list and handle selection
-    function renderObjectList() {
-      objectList.innerHTML = "";
-      animationObjects.forEach((obj, idx) => {
-        const li = document.createElement("li");
-        li.textContent = obj.name;
-        li.style.cursor = "pointer";
-        li.style.padding = "4px 8px";
-        li.style.borderRadius = "4px";
-        li.style.marginBottom = "4px";
-        li.style.background = idx === selectedObject ? "#e0f0ff" : "";
-        li.onclick = () => {
-          selectedObject = idx;
-          renderObjectList();
-          renderImageSelect();
-          renderImageList();
-          renderMarkers();
-          renderKeyframeTable();
-          showSelectedObject(idx);
-          applyState(animationObjects[selectedObject].getState());
-          //updateCanvasObjects();
-          
-        };
-        objectList.appendChild(li);
-      });
-    } */
+      // Helper to create a new AnimationObject with defaults
+      function createDefaultAnimationObject(id, name = 'Object ' + id) {
+        return new AnimationObject({
+          id,
+          name,
+          x: 100,
+          y: 100,
+          size: 50,
+          rotation: 0,
+          opacity: 1,
+          visible: true,
+          mirror: false,
+          imageId: 1,
+          keyframes: [],
+          images: [{ id: 1, label: 'Default', url: 'Images/gupxCropped.png' }],
+          interactionEnabled: false,
+          interactionType: 'click',
+          interactionReceived: false,
+          InteractionFlagSeen: false,
+        });
+      }
 
-    function renderObjectList() {
-  objectList.innerHTML = "";
+      function renderObjectList() {
+        objectList.innerHTML = '';
 
-  animationObjects.forEach((obj, idx) => {
-    const li = document.createElement("li");
-    li.textContent = obj.name;
-    li.style.cursor = "pointer";
-    li.style.padding = "4px 8px";
-    li.style.borderRadius = "4px";
-    li.style.marginBottom = "4px";
-    li.style.background = idx === selectedObject ? "#e0f0ff" : "";
+        animationObjects.forEach((obj, idx) => {
+          const li = document.createElement('li');
+          li.textContent = obj.name;
+          li.style.cursor = 'pointer';
+          li.style.padding = '4px 8px';
+          li.style.borderRadius = '4px';
+          li.style.marginBottom = '4px';
+          li.style.background = idx === selectedObject ? '#e0f0ff' : '';
 
-    let clickTimer;
+          let clickTimer;
 
-    li.addEventListener("click", () => {
-      // Delay to see if it's a double click
-      clickTimer = setTimeout(() => {
-        selectedObject = idx;
-        renderObjectList();
-        renderImageSelect();
-        renderImageList();
-        renderMarkers();
-        renderKeyframeTable();
-        showSelectedObject(idx);
-        applyState(animationObjects[selectedObject].getState());
-      }, 200); // faster double-click response
-    });
+          li.addEventListener('click', () => {
+            // Delay to see if it's a double click
+            clickTimer = setTimeout(() => {
+              selectedObject = idx;
+              renderObjectList();
+              renderImageSelect();
+              renderImageList();
+              renderMarkers();
+              renderKeyframeTable();
+              showSelectedObject(idx);
+              applyState(animationObjects[selectedObject].getState());
+            }, 200); // faster double-click response
+          });
 
-    li.addEventListener("dblclick", () => {
-      clearTimeout(clickTimer); // cancel single-click action
+          li.addEventListener('dblclick', () => {
+            clearTimeout(clickTimer); // cancel single-click action
 
-      const input = document.createElement("input");
-      input.type = "text";
-      input.value = obj.name;
-      input.style.width = "100%";
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = obj.name;
+            input.style.width = '100%';
 
-      li.innerHTML = "";
-      li.appendChild(input);
-      input.focus();
-      input.select(); // highlight all text immediately
+            li.innerHTML = '';
+            li.appendChild(input);
+            input.focus();
+            input.select(); // highlight all text immediately
 
-      const saveName = () => {
-        obj.name = input.value.trim() || `Object ${obj.id}`;
+            const saveName = () => {
+              obj.name = input.value.trim() || `Object ${obj.id}`;
+              renderObjectList();
+            };
+            input.addEventListener('blur', saveName);
+            input.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter') saveName();
+            });
+          });
+
+          objectList.appendChild(li);
+        });
+      }
+
+      function showSelectedObject(index) {
+        for (let i = 0; i < animationObjects.length; i++) {
+          animationObjects[i].visible = false; // Hide all objects
+        }
+        animationObjects[index].visible = true; // Show only the selected object
+        currentState.visible = true; // Ensure the current state reflects visibility
+        selectedObject = index;
+      }
+
+      addObjectBtn.onclick = () => {
+        const newId =
+          animationObjects.length > 0 ? Math.max(...animationObjects.map((o) => o.id)) + 1 : 1;
+
+        // Ask user for name
+        let name = prompt('Enter a name for the new object (leave blank for default):', '');
+
+        // Fallback if no name provided
+        if (!name || name.trim() === '') {
+          name = 'Object ' + newId;
+        }
+
+        // Create the object
+        const obj = createDefaultAnimationObject(newId, name);
+        animationObjects.push(obj);
+
+        // Update UI
         renderObjectList();
       };
-      input.addEventListener("blur", saveName);
-      input.addEventListener("keydown", (e) => {
-        if (e.key === "Enter") saveName();
-      });
-    });
 
-    objectList.appendChild(li);
-  });
-}
+      function applyState(state) {
+        if (showAllObjectsCheckbox.checked) {
+          // 🚀 Update ALL objects according to timeline
+          animationObjects.forEach((obj) => {
+            const s = getStateAt(obj, currentTime); // state per object
+            obj.x = s.x;
+            obj.y = s.y;
+            obj.size = s.size;
+            obj.rotation = s.rotation;
+            obj.opacity = s.opacity;
+            obj.visible = s.visible;
+            obj.mirror = s.mirror;
+            obj.imageId = s.imageId;
+          });
 
-
-    function showSelectedObject(index) {
-
-      for (let i = 0; i < animationObjects.length; i++) {
-        animationObjects[i].visible = false; // Hide all objects
-      }
-      animationObjects[index].visible = true; // Show only the selected object
-      currentState.visible = true; // Ensure the current state reflects visibility
-      selectedObject = index;
-    }
-
-    addObjectBtn.onclick = () => {
-  const newId = animationObjects.length > 0 
-    ? Math.max(...animationObjects.map(o => o.id)) + 1 
-    : 1;
-
-  // Ask user for name
-  let name = prompt("Enter a name for the new object (leave blank for default):", "");
-
-  // Fallback if no name provided
-  if (!name || name.trim() === "") {
-    name = "Object " + newId;
-  }
-
-  // Create the object
-  const obj = createDefaultAnimationObject(newId, name);
-  animationObjects.push(obj);
-
-  // Update UI
-  renderObjectList();
-  // createCanvasObjectDiv(obj);
-  // selectedObject = animationObjects.length - 1;
-};
-
-
-  /*   // Add new object
-  addObjectBtn.onclick = () => {
-    /* 
-    // Create a new div for the object on the canvas
-    createCanvasObjectDiv(obj);
-    selectedObject = animationObjects.length - 1;
-    
-    renderImageSelect();
-    renderImageList();
-    renderMarkers();
-    renderKeyframeTable();
-    applyState(obj.getState());
-    updateCanvasObjects(); 
-    const newId = animationObjects.length > 0 ? Math.max(...animationObjects.map(o => o.id)) + 1 : 1;
-    const obj = createDefaultAnimationObject(newId, "Object " + newId);
-    animationObjects.push(obj);
-    renderObjectList();
-    //createCanvasObjectDiv(obj);
-    //selectedObject = animationObjects.length - 1;
-  }; */
-
-/*     function applyState(state) {
-      // Update the selected object's properties
-      const obj = animationObjects[selectedObject];
-      obj.x = state.x;
-      obj.y = state.y;
-      obj.size = state.size;
-      obj.rotation = state.rotation;
-      obj.opacity = state.opacity;
-      obj.visible = state.visible;
-      obj.mirror = state.mirror;
-      obj.imageId = state.imageId;
-
-      // Update UI controls
-      inputX.value = Math.round(state.x);
-      inputY.value = Math.round(state.y);
-      inputRotation.value = Math.round(state.rotation);
-      inputSize.value = Math.round(state.size);
-      inputOpacity.value = Math.round(state.opacity * 100);
-      inputVisible.checked = state.visible;
-      inputMirror.checked = state.mirror;
-      imageSelect.value = (
-        obj.images.find(i => i.id === state.imageId)
-          ? state.imageId
-          : obj.images[0].id
-      );
-
-      // If you are not using a continuous render loop, force a redraw:
-      // AnimationObject.renderAll();
-    } */
-
-    function applyState(state) {
-      if (showAllObjectsCheckbox.checked) {
-        // 🚀 Update ALL objects according to timeline
-        animationObjects.forEach(obj => {
-          const s = getStateAt(obj, currentTime); // state per object
-          obj.x = s.x;
-          obj.y = s.y;
-          obj.size = s.size;
-          obj.rotation = s.rotation;
-          obj.opacity = s.opacity;
-          obj.visible = s.visible;
-          obj.mirror = s.mirror;
-          obj.imageId = s.imageId;
-          //obj.interactionEnabled = s.interactionEnabled;
-          //obj.interactionType = s.interactionType;
-          //obj.interactionReceived = s.interactionReceived;
-        });
-
-        // UI still shows the selected object’s values
-        const selObj = animationObjects[selectedObject];
-        inputX.value = Math.round(selObj.x);
-        inputY.value = Math.round(selObj.y);
-        inputRotation.value = Math.round(selObj.rotation);
-        inputSize.value = Math.round(selObj.size);
-        inputOpacity.value = Math.round(selObj.opacity * 100);
-        inputVisible.checked = selObj.visible;
-        inputMirror.checked = selObj.mirror;
-        imageSelect.value = (
-          selObj.images.find(i => i.id === selObj.imageId)
+          // UI still shows the selected object’s values
+          const selObj = animationObjects[selectedObject];
+          inputX.value = Math.round(selObj.x);
+          inputY.value = Math.round(selObj.y);
+          inputRotation.value = Math.round(selObj.rotation);
+          inputSize.value = Math.round(selObj.size);
+          inputOpacity.value = Math.round(selObj.opacity * 100);
+          inputVisible.checked = selObj.visible;
+          inputMirror.checked = selObj.mirror;
+          imageSelect.value = selObj.images.find((i) => i.id === selObj.imageId)
             ? selObj.imageId
-            : selObj.images[0].id
-        );
-        inputInteractionEnabled.checked = selObj.interactionEnabled;
-        inputInteractionType.value = selObj.interactionType;
-        inputInteractionReceived.checked = selObj.interactionReceived;
-      } else {
-        // 🎯 Normal single-object update
-        const obj = animationObjects[selectedObject];
-        obj.x = state.x;
-        obj.y = state.y;
-        obj.size = state.size;
-        obj.rotation = state.rotation;
-        obj.opacity = state.opacity;
-        obj.visible = state.visible;
-        obj.mirror = state.mirror;
-        obj.imageId = state.imageId;
-        //obj.interactionEnabled = state.interactionEnabled;
-        //obj.interactionType = state.interactionType;
-        //obj.interactionReceived = state.interactionReceived;
+            : selObj.images[0].id;
+          inputInteractionEnabled.checked = selObj.interactionEnabled;
+          inputInteractionType.value = selObj.interactionType;
+          inputInteractionReceived.checked = selObj.interactionReceived;
+        } else {
+          // 🎯 Normal single-object update
+          const obj = animationObjects[selectedObject];
+          obj.x = state.x;
+          obj.y = state.y;
+          obj.size = state.size;
+          obj.rotation = state.rotation;
+          obj.opacity = state.opacity;
+          obj.visible = state.visible;
+          obj.mirror = state.mirror;
+          obj.imageId = state.imageId;
 
-        // Update UI controls
-        inputX.value = Math.round(state.x);
-        inputY.value = Math.round(state.y);
-        inputRotation.value = Math.round(state.rotation);
-        inputSize.value = Math.round(state.size);
-        inputOpacity.value = Math.round(state.opacity * 100);
-        inputVisible.checked = state.visible;
-        inputMirror.checked = state.mirror;
-        imageSelect.value = (
-          obj.images.find(i => i.id === state.imageId)
+          // Update UI controls
+          inputX.value = Math.round(state.x);
+          inputY.value = Math.round(state.y);
+          inputRotation.value = Math.round(state.rotation);
+          inputSize.value = Math.round(state.size);
+          inputOpacity.value = Math.round(state.opacity * 100);
+          inputVisible.checked = state.visible;
+          inputMirror.checked = state.mirror;
+          imageSelect.value = obj.images.find((i) => i.id === state.imageId)
             ? state.imageId
-            : obj.images[0].id
-        );
-        inputInteractionEnabled.checked = state.interactionEnabled;
-        inputInteractionType.value = state.interactionType;
-        inputInteractionReceived.checked = state.interactionReceived;
+            : obj.images[0].id;
+          inputInteractionEnabled.checked = state.interactionEnabled;
+          inputInteractionType.value = state.interactionType;
+          inputInteractionReceived.checked = state.interactionReceived;
+        }
       }
 
-      // Force a redraw if needed
-      // AnimationObject.renderAll();
-    }
+      function readInputsToState() {
+        if (
+          selectedKeyframeIndex !== null &&
+          animationObjects[selectedObject].keyframes[selectedKeyframeIndex]
+        ) {
+          // Edit the selected keyframe
+          const kf = animationObjects[selectedObject].keyframes[selectedKeyframeIndex];
+          kf.x = parseFloat(inputX.value);
+          kf.y = parseFloat(inputY.value);
+          kf.rotation = parseFloat(inputRotation.value);
+          kf.size = parseFloat(inputSize.value);
+          kf.opacity = parseFloat(inputOpacity.value) / 100;
+          kf.visible = inputVisible.checked;
+          kf.mirror = inputMirror.checked;
+          kf.imageId = parseInt(imageSelect.value);
+          kf.interactionEnabled = inputInteractionEnabled.checked;
+          kf.interactionType = inputInteractionType.value;
+          kf.interactionReceived = inputInteractionReceived.checked;
+          // if interaction is disabled, force reset
+          if (!kf.interactionEnabled) {
+            kf.interactionReceived = false;
+          }
 
-
-    function readInputsToState() {
-      if (selectedKeyframeIndex !== null && animationObjects[selectedObject].keyframes[selectedKeyframeIndex]) {
-        // Edit the selected keyframe
-        const kf = animationObjects[selectedObject].keyframes[selectedKeyframeIndex];
-        kf.x = parseFloat(inputX.value);
-        kf.y = parseFloat(inputY.value);
-        kf.rotation = parseFloat(inputRotation.value);
-        kf.size = parseFloat(inputSize.value);
-        kf.opacity = parseFloat(inputOpacity.value) / 100;
-        kf.visible = inputVisible.checked;
-        kf.mirror = inputMirror.checked;
-        kf.imageId = parseInt(imageSelect.value);
-        kf.interactionEnabled = inputInteractionEnabled.checked;
-        kf.interactionType = inputInteractionType.value;
-        kf.interactionReceived = inputInteractionReceived.checked;
-        // if interaction is disabled, force reset
-        if (!kf.interactionEnabled) {
-          kf.interactionReceived = false;
+          applyState(kf);
+          renderKeyframeTable();
+          renderMarkers();
+        } else {
+          // Edit the current state (no keyframe selected)
+          currentState.x = parseFloat(inputX.value);
+          currentState.y = parseFloat(inputY.value);
+          currentState.rotation = parseFloat(inputRotation.value);
+          currentState.size = parseFloat(inputSize.value);
+          currentState.opacity = parseFloat(inputOpacity.value) / 100;
+          currentState.visible = inputVisible.checked;
+          currentState.mirror = inputMirror.checked;
+          currentState.imageId = parseInt(imageSelect.value);
+          currentState.interactionEnabled = inputInteractionEnabled.checked;
+          currentState.interactionType = inputInteractionType.value;
+          currentState.interactionReceived = inputInteractionReceived.checked;
+          if (!currentState.interactionEnabled) {
+            currentState.interactionReceived = false;
+          }
+          applyState(currentState);
         }
+      }
 
-        applyState(kf);
-        renderKeyframeTable();
+      inputX.addEventListener('input', readInputsToState);
+      inputY.addEventListener('input', readInputsToState);
+      inputRotation.addEventListener('input', readInputsToState);
+      inputSize.addEventListener('input', readInputsToState);
+      inputOpacity.addEventListener('input', readInputsToState);
+      inputVisible.addEventListener('change', readInputsToState);
+      inputMirror.addEventListener('change', readInputsToState); // <-- add this
+      imageSelect.addEventListener('change', readInputsToState);
+      inputInteractionEnabled.addEventListener('change', readInputsToState);
+      inputInteractionType.addEventListener('change', readInputsToState);
+      inputInteractionReceived.addEventListener('change', readInputsToState);
+
+      addKeyframeBtn.addEventListener('click', () => {
+        const time = parseFloat(timeline.value);
+        // Use the selected object's current properties, not currentState
+        const obj = animationObjects[selectedObject];
+        const state = { ...obj.getState(), time };
+        obj.keyframes.push(state);
+        obj.keyframes.sort((a, b) => a.time - b.time);
         renderMarkers();
-      } else {
-        // Edit the current state (no keyframe selected)
-        currentState.x = parseFloat(inputX.value);
-        currentState.y = parseFloat(inputY.value);
-        currentState.rotation = parseFloat(inputRotation.value);
-        currentState.size = parseFloat(inputSize.value);
-        currentState.opacity = parseFloat(inputOpacity.value) / 100;
-        currentState.visible = inputVisible.checked;
-        currentState.mirror = inputMirror.checked;
-        currentState.imageId = parseInt(imageSelect.value);
-        currentState.interactionEnabled = inputInteractionEnabled.checked;
-        currentState.interactionType = inputInteractionType.value;
-        currentState.interactionReceived = inputInteractionReceived.checked;
-        if (!currentState.interactionEnabled) {
-          currentState.interactionReceived = false;
-        }
-        applyState(currentState);
-      }
-    }
-
-    inputX.addEventListener("input", readInputsToState);
-    inputY.addEventListener("input", readInputsToState);
-    inputRotation.addEventListener("input", readInputsToState);
-    inputSize.addEventListener("input", readInputsToState);
-    inputOpacity.addEventListener("input", readInputsToState);
-    inputVisible.addEventListener("change", readInputsToState);
-    inputMirror.addEventListener("change", readInputsToState); // <-- add this
-    imageSelect.addEventListener("change", readInputsToState);
-    inputInteractionEnabled.addEventListener("change", readInputsToState);
-    inputInteractionType.addEventListener("change", readInputsToState);
-    inputInteractionReceived.addEventListener("change", readInputsToState);
-
-    addKeyframeBtn.addEventListener("click", () => {
-      const time = parseFloat(timeline.value);
-      // Use the selected object's current properties, not currentState
-      const obj = animationObjects[selectedObject];
-      const state = { ...obj.getState(), time };
-      obj.keyframes.push(state);
-      obj.keyframes.sort((a, b) => a.time - b.time);
-      renderMarkers();
-      renderKeyframeTable();
-      console.log("Added keyframe:", state);
-    });
-
-    function interpolateObj(a, b, t, o) {
-      const lerp = (x, y) => x + (y - x) * t;
-
-      // This mechanism handles the 1 shot activation of the interaction flag per keyframe
-      var interactionReqFlag = false;
-      console.log(
-        `[interaction check] obj=${o.id || "?"}, keyframe.t=${a.time}, ` +
-        `kf.interactionEnabled=${a.interactionEnabled}, ` +
-        `obj.InteractionFlagSeen=${o.InteractionFlagSeen}, ` +
-        `obj.interactionEnabled=${o.interactionEnabled}`
-      );
-      if (a.interactionEnabled && !o.InteractionFlagSeen)
-      {
-        interactionReqFlag = true;
-        o.InteractionFlagSeen = true;
-        o.interactionEnabled = true;
-      }
-      if(!a.interactionEnabled)
-      {
-        o.InteractionFlagSeen = false;
-        interactionReqFlag = false;
-        o.interactionEnabled = false;
-        o.interactionReceived = false;
-      }
-    
-      return {
-        x: lerp(a.x, b.x),
-        y: lerp(a.y, b.y),
-        size: lerp(a.size, b.size),
-        rotation: lerp(a.rotation, b.rotation),
-        opacity: lerp(a.opacity, b.opacity),
-        visible: a.visible,
-        mirror: a.mirror,
-        imageId: a.imageId, // step, not interpolated
-        interactionEnabled: interactionReqFlag, // step, not interpolated
-        interactionType: a.interactionType,       // step, not interpolated
-        interactionReceived: a.interactionReceived // step, not interpolated
-      };
-    }
-
-    function interpolate(a, b, t) {
-      const lerp = (x, y) => x + (y - x) * t;
-    
-      return {
-        x: lerp(a.x, b.x),
-        y: lerp(a.y, b.y),
-        size: lerp(a.size, b.size),
-        rotation: lerp(a.rotation, b.rotation),
-        opacity: lerp(a.opacity, b.opacity),
-        visible: a.visible,
-        mirror: a.mirror,
-        imageId: a.imageId
-      };
-    }
-
-   /*  function getStateAt(time) {
-      let kfs = animationObjects[selectedObject].keyframes;
-      if (kfs.length === 0) return currentState;
-      if (time <= kfs[0].time) return kfs[0];
-      if (time >= kfs[kfs.length - 1].time) return kfs[kfs.length - 1];
-
-      for (let i = 0; i < kfs.length - 1; i++) {
-        const a = kfs[i];
-        const b = kfs[i + 1];
-        if (time >= a.time && time <= b.time) {
-          const progress = (time - a.time) / (b.time - a.time);
-          return interpolate(a, b, progress);
-        }
-      }
-      return currentState;
-    } */
-
-    function getStateAt(obj, time) {
-      const kfs = obj.keyframes;
-      if (kfs.length === 0) return { ...obj }; // return object itself if no keyframes
-
-      if (time <= kfs[0].time) return kfs[0];
-      if (time >= kfs[kfs.length - 1].time) return kfs[kfs.length - 1];
-
-      for (let i = 0; i < kfs.length - 1; i++) {
-        const a = kfs[i];
-        const b = kfs[i + 1];
-        if (time >= a.time && time <= b.time) {
-          const progress = (time - a.time) / (b.time - a.time);
-          if(a.interactionEnabled && !obj.InteractionFlagSeen)
-          {
-            a.InteractionFlagSeen = true;
-          }
-          return interpolateObj(a, b, progress, obj);
-        }
-      }
-
-      return { ...obj };
-    }
-
-    function getBackgroundAt(time) {
-      if (backgroundKeyframes.length === 0) return currentBackground;
-      if (time <= backgroundKeyframes[0].time) return backgroundKeyframes[0];
-      if (time >= backgroundKeyframes[backgroundKeyframes.length - 1].time) return backgroundKeyframes[backgroundKeyframes.length - 1];
-
-      for (let i = 0; i < backgroundKeyframes.length - 1; i++) {
-        const a = backgroundKeyframes[i];
-        const b = backgroundKeyframes[i + 1];
-        if (time >= a.time && time <= b.time) {
-          const progress = (time - a.time) / (b.time - a.time);
-          return interpolate(a, b, progress);
-        }
-      }
-      return currentBackground;
-    }
-
-    /* function updateFromTimeline() {
-      currentTime = parseFloat(timeline.value);
-      const state = getStateAt(currentTime);
-      const bgState = getBackgroundAt(currentTime);
-      selectedKeyframeIndex = null;
-      applyState(state);
-      applyBackground(bgState);
-      renderKeyframeTable();
-      renderBackgroundKeyframeTable();
-    } */
-
-    function updateFromTimeline() {
-      currentTime = parseFloat(timeline.value);
-      const bgState = getBackgroundAt(currentTime);
-      selectedKeyframeIndex = null;
-
-      if (showAllObjectsCheckbox.checked) {
-        // Update every object
-        animationObjects.forEach(obj => {
-          const state = getStateAt(obj, currentTime);
-          applyState(state); // assumes AnimationObject has a method for this
-        });
-      } else {
-        // Update only the selected object
-        const state = getStateAt(animationObjects[selectedObject], currentTime);
-        applyState(state); // your existing single-object logic
-      }
-
-      applyBackground(bgState);
-      renderKeyframeTable();
-      renderBackgroundKeyframeTable();
-    }
-
-
-    function pauseTimelineForInteraction(obj) {
-      clearInterval(playInterval);
-      playing = false;
-      pausedForInteraction = true;
-      togglePlayBtn.textContent = "Play";
-      console.log(`⏸ Timeline paused waiting for interaction on object ${obj.id} (${obj.name})`);
-    }
-
-    function resumeTimeline() {
-      pausedForInteraction = false;
-      if (!playing) {
-        playing = true;
-        togglePlayBtn.textContent = "Pause";
-        playInterval = setInterval(() => {
-          currentTime += 1;
-          const maxTime = parseInt(timeline.max, 10);
-
-          // ⏸ Check for interaction requirement
-          const blockingObj = animationObjects.find(
-            obj => obj.interactionEnabled && !obj.interactionReceived
-          );
-          if (blockingObj) {
-            pauseTimelineForInteraction(blockingObj);
-            return; // stop advancing until resumed
-          }
-
-          if (currentTime > maxTime) {
-            currentTime = maxTime;
-            clearInterval(playInterval);
-            playing = false;
-            togglePlayBtn.textContent = "Play";
-          }
-          timeline.value = currentTime;
-          updateFromTimeline();
-        }, 50);
-      }
-    }
-
-
-    //timeline.addEventListener("input", updateFromTimeline);
-    timeline.addEventListener("input", () => {
-      // reset interactions when scrubbing manually
-      animationObjects.forEach(obj => {
-        obj.interactionReceived = false;
+        renderKeyframeTable();
+        console.log('Added keyframe:', state);
       });
 
-      updateFromTimeline(); // existing behavior
-    });
+      function interpolateObj(a, b, t, o) {
+        const lerp = (x, y) => x + (y - x) * t;
 
-    togglePlayBtn.addEventListener("click", () => {
-      playing = !playing;
-      togglePlayBtn.textContent = playing ? "Pause" : "Play";
+        // This mechanism handles the 1 shot activation of the interaction flag per keyframe
+        var interactionReqFlag = false;
+        console.log(
+          `[interaction check] obj=${o.id || '?'}, keyframe.t=${a.time}, ` +
+            `kf.interactionEnabled=${a.interactionEnabled}, ` +
+            `obj.InteractionFlagSeen=${o.InteractionFlagSeen}, ` +
+            `obj.interactionEnabled=${o.interactionEnabled}`
+        );
+        if (a.interactionEnabled && !o.InteractionFlagSeen) {
+          interactionReqFlag = true;
+          o.InteractionFlagSeen = true;
+          o.interactionEnabled = true;
+        }
+        if (!a.interactionEnabled) {
+          o.InteractionFlagSeen = false;
+          interactionReqFlag = false;
+          o.interactionEnabled = false;
+          o.interactionReceived = false;
+        }
 
-      if (playing) {
-        playInterval = setInterval(() => {
-          currentTime += 1;
-          const maxTime = parseInt(timeline.max, 10); // always use current max
+        return {
+          x: lerp(a.x, b.x),
+          y: lerp(a.y, b.y),
+          size: lerp(a.size, b.size),
+          rotation: lerp(a.rotation, b.rotation),
+          opacity: lerp(a.opacity, b.opacity),
+          visible: a.visible,
+          mirror: a.mirror,
+          imageId: a.imageId, // step, not interpolated
+          interactionEnabled: interactionReqFlag, // step, not interpolated
+          interactionType: a.interactionType, // step, not interpolated
+          interactionReceived: a.interactionReceived, // step, not interpolated
+        };
+      }
 
-          // ⏸ Check for interaction requirement
-          const blockingObj = animationObjects.find(
-            obj => obj.interactionEnabled && !obj.interactionReceived
-          );
-          if (blockingObj) {
-            pauseTimelineForInteraction(blockingObj);
-            return; // stop advancing until resumed
+      function interpolate(a, b, t) {
+        const lerp = (x, y) => x + (y - x) * t;
+
+        return {
+          x: lerp(a.x, b.x),
+          y: lerp(a.y, b.y),
+          size: lerp(a.size, b.size),
+          rotation: lerp(a.rotation, b.rotation),
+          opacity: lerp(a.opacity, b.opacity),
+          visible: a.visible,
+          mirror: a.mirror,
+          imageId: a.imageId,
+        };
+      }
+
+      function getStateAt(obj, time) {
+        const kfs = obj.keyframes;
+        if (kfs.length === 0) return { ...obj }; // return object itself if no keyframes
+
+        if (time <= kfs[0].time) return kfs[0];
+        if (time >= kfs[kfs.length - 1].time) return kfs[kfs.length - 1];
+
+        for (let i = 0; i < kfs.length - 1; i++) {
+          const a = kfs[i];
+          const b = kfs[i + 1];
+          if (time >= a.time && time <= b.time) {
+            const progress = (time - a.time) / (b.time - a.time);
+            if (a.interactionEnabled && !obj.InteractionFlagSeen) {
+              a.InteractionFlagSeen = true;
+            }
+            return interpolateObj(a, b, progress, obj);
           }
+        }
 
-          if (currentTime > maxTime) {
-            currentTime = maxTime;
-            clearInterval(playInterval);
-            playing = false;
-            togglePlayBtn.textContent = "Play";
+        return { ...obj };
+      }
+
+      function getBackgroundAt(time) {
+        if (backgroundKeyframes.length === 0) return currentBackground;
+        if (time <= backgroundKeyframes[0].time) return backgroundKeyframes[0];
+        if (time >= backgroundKeyframes[backgroundKeyframes.length - 1].time)
+          return backgroundKeyframes[backgroundKeyframes.length - 1];
+
+        for (let i = 0; i < backgroundKeyframes.length - 1; i++) {
+          const a = backgroundKeyframes[i];
+          const b = backgroundKeyframes[i + 1];
+          if (time >= a.time && time <= b.time) {
+            const progress = (time - a.time) / (b.time - a.time);
+            return interpolate(a, b, progress);
           }
-          timeline.value = currentTime;
-          updateFromTimeline();
-        }, 50);
-      } else {
+        }
+        return currentBackground;
+      }
+
+      function updateFromTimeline() {
+        currentTime = parseFloat(timeline.value);
+        const bgState = getBackgroundAt(currentTime);
+        selectedKeyframeIndex = null;
+
+        if (showAllObjectsCheckbox.checked) {
+          // Update every object
+          animationObjects.forEach((obj) => {
+            const state = getStateAt(obj, currentTime);
+            applyState(state); // assumes AnimationObject has a method for this
+          });
+        } else {
+          // Update only the selected object
+          const state = getStateAt(animationObjects[selectedObject], currentTime);
+          applyState(state); // your existing single-object logic
+        }
+
+        applyBackground(bgState);
+        renderKeyframeTable();
+        renderBackgroundKeyframeTable();
+      }
+
+      function pauseTimelineForInteraction(obj) {
         clearInterval(playInterval);
+        playing = false;
+        pausedForInteraction = true;
+        togglePlayBtn.textContent = 'Play';
+        console.log(`⏸ Timeline paused waiting for interaction on object ${obj.id} (${obj.name})`);
       }
-    });
 
-    // Buttons to adjust max time
-    increaseTimeBtn.addEventListener("click", () => {
-      timeline.max = parseInt(timeline.max, 10) + 100;
-    });
+      function resumeTimeline() {
+        pausedForInteraction = false;
+        if (!playing) {
+          playing = true;
+          togglePlayBtn.textContent = 'Pause';
+          playInterval = setInterval(() => {
+            currentTime += 1;
+            const maxTime = parseInt(timeline.max, 10);
 
-    decreaseTimeBtn.addEventListener("click", () => {
-      let newMax = parseInt(timeline.max, 10) - 100;
-      if (newMax < 100) newMax = 100; // bottom out at 100
-      timeline.max = newMax;
-      if (currentTime > newMax) {
-        currentTime = newMax;
-        timeline.value = currentTime;
-        updateFromTimeline();
+            // ⏸ Check for interaction requirement
+            const blockingObj = animationObjects.find(
+              (obj) => obj.interactionEnabled && !obj.interactionReceived
+            );
+            if (blockingObj) {
+              pauseTimelineForInteraction(blockingObj);
+              return; // stop advancing until resumed
+            }
+
+            if (currentTime > maxTime) {
+              currentTime = maxTime;
+              clearInterval(playInterval);
+              playing = false;
+              togglePlayBtn.textContent = 'Play';
+            }
+            timeline.value = currentTime;
+            updateFromTimeline();
+          }, 50);
+        }
       }
-    });
 
-    changeImageBtn.addEventListener("click", () => {
-      imageInput.click();
-    });
+      //timeline.addEventListener("input", updateFromTimeline);
+      timeline.addEventListener('input', () => {
+        // reset interactions when scrubbing manually
+        animationObjects.forEach((obj) => {
+          obj.interactionReceived = false;
+        });
 
-    imageInput.addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        const label = prompt("Enter image label/description:", `Image ${animationObjects[selectedObject].images.length + 1}`) || `Image ${animationObjects[selectedObject].images.length + 1}`;
-        animationObjects[selectedObject].images.push({ id: nextImageId++, label, url: evt.target.result });
-        renderImageSelect();
-        renderImageList(); // <-- add this
-      };
-      reader.readAsDataURL(file);
-    });
-
-    resetBtn.addEventListener("click", () => {
-      currentState = {
-        x: 100,
-        y: 100,
-        size: 50,
-        rotation: 0,
-        opacity: 1,
-        visible: true,
-        mirror: false,
-        imageId: 1
-      };
-      animationObjects[selectedObject].keyframes.length = 0;
-      currentTime = 0;
-      timeline.value = 0;
-      playing = false;
-      togglePlayBtn.textContent = "Play";
-      clearInterval(playInterval);
-      applyState(currentState);
-      renderMarkers();
-      renderKeyframeTable();
-    });
-
-    /* function renderMarkers() {
-      markerTrack.innerHTML = "";
-      animationObjects[selectedObject].keyframes.forEach((kf) => {
-        const marker = document.createElement("div");
-        marker.className = "marker";
-        marker.style.left = `${(kf.time / 100) * 300}px`;
-        markerTrack.appendChild(marker);
+        updateFromTimeline(); // existing behavior
       });
-    } */
 
-    function renderMarkers() {
-      markerTrack.innerHTML = "";
+      togglePlayBtn.addEventListener('click', () => {
+        playing = !playing;
+        togglePlayBtn.textContent = playing ? 'Pause' : 'Play';
 
-      const maxTime = parseInt(timeline.max, 10);
-      const trackWidth = markerTrack.offsetWidth; // use actual width of marker track
+        if (playing) {
+          playInterval = setInterval(() => {
+            currentTime += 1;
+            const maxTime = parseInt(timeline.max, 10); // always use current max
 
-      animationObjects[selectedObject].keyframes.forEach((kf) => {
-        const marker = document.createElement("div");
-        marker.className = "marker";
+            // ⏸ Check for interaction requirement
+            const blockingObj = animationObjects.find(
+              (obj) => obj.interactionEnabled && !obj.interactionReceived
+            );
+            if (blockingObj) {
+              pauseTimelineForInteraction(blockingObj);
+              return; // stop advancing until resumed
+            }
 
-        // Position marker proportionally based on timeline max
-        const position = (kf.time / maxTime) * trackWidth;
-        marker.style.left = `${position}px`;
-
-        markerTrack.appendChild(marker);
+            if (currentTime > maxTime) {
+              currentTime = maxTime;
+              clearInterval(playInterval);
+              playing = false;
+              togglePlayBtn.textContent = 'Play';
+            }
+            timeline.value = currentTime;
+            updateFromTimeline();
+          }, 50);
+        } else {
+          clearInterval(playInterval);
+        }
       });
-  }
 
-    function renderKeyframeTable() {
-      keyframeTable.innerHTML = "";
-      animationObjects[selectedObject].keyframes.forEach((kf, index) => {
-        const img = animationObjects[selectedObject].images.find(i => i.id === kf.imageId);
-        const row = document.createElement("tr");
-        row.innerHTML = `
+      // Buttons to adjust max time
+      increaseTimeBtn.addEventListener('click', () => {
+        timeline.max = parseInt(timeline.max, 10) + 100;
+      });
+
+      decreaseTimeBtn.addEventListener('click', () => {
+        let newMax = parseInt(timeline.max, 10) - 100;
+        if (newMax < 100) newMax = 100; // bottom out at 100
+        timeline.max = newMax;
+        if (currentTime > newMax) {
+          currentTime = newMax;
+          timeline.value = currentTime;
+          updateFromTimeline();
+        }
+      });
+
+      changeImageBtn.addEventListener('click', () => {
+        imageInput.click();
+      });
+
+      imageInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (evt) {
+          const label =
+            prompt(
+              'Enter image label/description:',
+              `Image ${animationObjects[selectedObject].images.length + 1}`
+            ) || `Image ${animationObjects[selectedObject].images.length + 1}`;
+          animationObjects[selectedObject].images.push({
+            id: nextImageId++,
+            label,
+            url: evt.target.result,
+          });
+          renderImageSelect();
+          renderImageList(); // <-- add this
+        };
+        reader.readAsDataURL(file);
+      });
+
+      resetBtn.addEventListener('click', () => {
+        currentState = {
+          x: 100,
+          y: 100,
+          size: 50,
+          rotation: 0,
+          opacity: 1,
+          visible: true,
+          mirror: false,
+          imageId: 1,
+        };
+        animationObjects[selectedObject].keyframes.length = 0;
+        currentTime = 0;
+        timeline.value = 0;
+        playing = false;
+        togglePlayBtn.textContent = 'Play';
+        clearInterval(playInterval);
+        applyState(currentState);
+        renderMarkers();
+        renderKeyframeTable();
+      });
+
+      function renderMarkers() {
+        markerTrack.innerHTML = '';
+
+        const maxTime = parseInt(timeline.max, 10);
+        const trackWidth = markerTrack.offsetWidth; // use actual width of marker track
+
+        animationObjects[selectedObject].keyframes.forEach((kf) => {
+          const marker = document.createElement('div');
+          marker.className = 'marker';
+
+          // Position marker proportionally based on timeline max
+          const position = (kf.time / maxTime) * trackWidth;
+          marker.style.left = `${position}px`;
+
+          markerTrack.appendChild(marker);
+        });
+      }
+
+      function renderKeyframeTable() {
+        keyframeTable.innerHTML = '';
+        animationObjects[selectedObject].keyframes.forEach((kf, index) => {
+          const img = animationObjects[selectedObject].images.find((i) => i.id === kf.imageId);
+          const row = document.createElement('tr');
+          row.innerHTML = `
           <td>${kf.time}</td>
           <td>${Math.round(kf.x)}</td>
           <td>${Math.round(kf.y)}</td>
           <td>${Math.round(kf.rotation)}</td>
           <td>${Math.round(kf.size)}</td>
           <td>${Math.round(kf.opacity * 100)}</td>
-          <td>${kf.visible ? "Yes" : "No"}</td>
-          <td>${kf.mirror ? "Yes" : "No"}</td>
-          <td>${img ? img.label : ""}</td>
-          <td>${kf.interactionEnabled ? "Yes" : "No"}</td>
-          <td>${kf.interactionType || "-"}</td>
-          <td>${kf.interactionReceived ? "Yes" : "No"}</td>
+          <td>${kf.visible ? 'Yes' : 'No'}</td>
+          <td>${kf.mirror ? 'Yes' : 'No'}</td>
+          <td>${img ? img.label : ''}</td>
+          <td>${kf.interactionEnabled ? 'Yes' : 'No'}</td>
+          <td>${kf.interactionType || '-'}</td>
+          <td>${kf.interactionReceived ? 'Yes' : 'No'}</td>
           <td><button class="deleteKeyframeBtn" data-index="${index}" title="Delete" style="font-family:'Segoe UI Symbol','Segoe UI Emoji',sans-serif;">🗑️</button></td>
           <td>
             <button class="moveUpBtn" data-index="${index}" title="Move Up">▲</button>
             <button class="moveDownBtn" data-index="${index}" title="Move Down">▼</button>
           </td>
         `;
-        if (selectedKeyframeIndex === index) {
-          row.style.backgroundColor = "#ffeeba";
-        }
-        row.addEventListener("click", (e) => {
-          // Prevent row click when clicking a button
-          if (e.target.tagName === "BUTTON") return;
-          selectedKeyframeIndex = index;
-          applyState(kf);
-          // Update input fields to match keyframe
-          inputX.value = Math.round(kf.x);
-          inputY.value = Math.round(kf.y);
-          inputRotation.value = Math.round(kf.rotation);
-          inputSize.value = Math.round(kf.size);
-          inputOpacity.value = Math.round(kf.opacity * 100);
-          inputVisible.checked = kf.visible;
-          inputMirror.checked = kf.mirror;
-          imageSelect.value = kf.imageId;
-          timeline.value = kf.time;
-          inputInteractionEnabled.checked = !!kf.interactionEnabled;
-          inputInteractionType.value = kf.interactionType || "click";
-          inputInteractionReceived.checked = !!kf.interactionReceived;
-          renderKeyframeTable();
+          if (selectedKeyframeIndex === index) {
+            row.style.backgroundColor = '#ffeeba';
+          }
+          row.addEventListener('click', (e) => {
+            // Prevent row click when clicking a button
+            if (e.target.tagName === 'BUTTON') return;
+            selectedKeyframeIndex = index;
+            applyState(kf);
+            // Update input fields to match keyframe
+            inputX.value = Math.round(kf.x);
+            inputY.value = Math.round(kf.y);
+            inputRotation.value = Math.round(kf.rotation);
+            inputSize.value = Math.round(kf.size);
+            inputOpacity.value = Math.round(kf.opacity * 100);
+            inputVisible.checked = kf.visible;
+            inputMirror.checked = kf.mirror;
+            imageSelect.value = kf.imageId;
+            timeline.value = kf.time;
+            inputInteractionEnabled.checked = !!kf.interactionEnabled;
+            inputInteractionType.value = kf.interactionType || 'click';
+            inputInteractionReceived.checked = !!kf.interactionReceived;
+            renderKeyframeTable();
+          });
+          keyframeTable.appendChild(row);
         });
-        keyframeTable.appendChild(row);
-      });
 
-      // Attach delete handlers
-      keyframeTable.querySelectorAll(".deleteKeyframeBtn").forEach(btn => {
-        btn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          const idx = parseInt(btn.getAttribute("data-index"));
-          animationObjects[selectedObject].keyframes.splice(idx, 1);
-          renderMarkers();
-          renderKeyframeTable();
-        });
-      });
-      keyframeTable.querySelectorAll(".moveUpBtn").forEach(btn => {
-        btn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          const idx = parseInt(btn.getAttribute("data-index"));
-          if (idx > 0) {
-            // Swap times
-            [animationObjects[selectedObject].keyframes[idx].time, animationObjects[selectedObject].keyframes[idx-1].time] = [animationObjects[selectedObject].keyframes[idx-1].time, animationObjects[selectedObject].keyframes[idx].time];
-            animationObjects[selectedObject].keyframes.sort((a, b) => a.time - b.time);
+        // Attach delete handlers
+        keyframeTable.querySelectorAll('.deleteKeyframeBtn').forEach((btn) => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const idx = parseInt(btn.getAttribute('data-index'));
+            animationObjects[selectedObject].keyframes.splice(idx, 1);
             renderMarkers();
             renderKeyframeTable();
-          }
+          });
         });
-      });
-      keyframeTable.querySelectorAll(".moveDownBtn").forEach(btn => {
-        btn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          const idx = parseInt(btn.getAttribute("data-index"));
-          if (idx < animationObjects[selectedObject].keyframes.length - 1) {
-            [animationObjects[selectedObject].keyframes[idx].time, animationObjects[selectedObject].keyframes[idx+1].time] = [animationObjects[selectedObject].keyframes[idx+1].time, animationObjects[selectedObject].keyframes[idx].time];
-            animationObjects[selectedObject].keyframes.sort((a, b) => a.time - b.time);
-            renderMarkers();
-            renderKeyframeTable();
-          }
+        keyframeTable.querySelectorAll('.moveUpBtn').forEach((btn) => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const idx = parseInt(btn.getAttribute('data-index'));
+            if (idx > 0) {
+              // Swap times
+              [
+                animationObjects[selectedObject].keyframes[idx].time,
+                animationObjects[selectedObject].keyframes[idx - 1].time,
+              ] = [
+                animationObjects[selectedObject].keyframes[idx - 1].time,
+                animationObjects[selectedObject].keyframes[idx].time,
+              ];
+              animationObjects[selectedObject].keyframes.sort((a, b) => a.time - b.time);
+              renderMarkers();
+              renderKeyframeTable();
+            }
+          });
         });
-      });
-    }
+        keyframeTable.querySelectorAll('.moveDownBtn').forEach((btn) => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const idx = parseInt(btn.getAttribute('data-index'));
+            if (idx < animationObjects[selectedObject].keyframes.length - 1) {
+              [
+                animationObjects[selectedObject].keyframes[idx].time,
+                animationObjects[selectedObject].keyframes[idx + 1].time,
+              ] = [
+                animationObjects[selectedObject].keyframes[idx + 1].time,
+                animationObjects[selectedObject].keyframes[idx].time,
+              ];
+              animationObjects[selectedObject].keyframes.sort((a, b) => a.time - b.time);
+              renderMarkers();
+              renderKeyframeTable();
+            }
+          });
+        });
+      }
 
-    function renderBackgroundKeyframeTable() {
-      backgroundKeyframeTable.innerHTML = "";
-      backgroundKeyframes.forEach((bkf, index) => {
-        const bg = backgroundImages.find(i => i.id === bkf.imageId);
-        const row = document.createElement("tr");
-        row.innerHTML = `
+      function renderBackgroundKeyframeTable() {
+        backgroundKeyframeTable.innerHTML = '';
+        backgroundKeyframes.forEach((bkf, index) => {
+          const bg = backgroundImages.find((i) => i.id === bkf.imageId);
+          const row = document.createElement('tr');
+          row.innerHTML = `
           <td>${bkf.time}</td>
-          <td>${bg ? bg.label : ""}</td>
+          <td>${bg ? bg.label : ''}</td>
           <td>
             <button class="deleteBgKeyframeBtn" data-index="${index}" title="Delete" style="font-family:'Segoe UI Symbol','Segoe UI Emoji',sans-serif;">🗑️</button>
           </td>
         `;
-        row.addEventListener("click", (e) => {
-          if (e.target.tagName === "BUTTON") return;
-          // Select and apply this background keyframe
-          currentBackground.imageId = bkf.imageId;
-          timeline.value = bkf.time;
-          applyBackground(bkf);
-          renderBackgroundKeyframeTable();
+          row.addEventListener('click', (e) => {
+            if (e.target.tagName === 'BUTTON') return;
+            // Select and apply this background keyframe
+            currentBackground.imageId = bkf.imageId;
+            timeline.value = bkf.time;
+            applyBackground(bkf);
+            renderBackgroundKeyframeTable();
+          });
+          backgroundKeyframeTable.appendChild(row);
         });
-        backgroundKeyframeTable.appendChild(row);
-      });
 
-      // Attach delete handlers
-      backgroundKeyframeTable.querySelectorAll(".deleteBgKeyframeBtn").forEach(btn => {
-        btn.addEventListener("click", (e) => {
-          e.stopPropagation();
-          const idx = parseInt(btn.getAttribute("data-index"));
-          backgroundKeyframes.splice(idx, 1);
-          renderBackgroundKeyframeTable();
+        // Attach delete handlers
+        backgroundKeyframeTable.querySelectorAll('.deleteBgKeyframeBtn').forEach((btn) => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const idx = parseInt(btn.getAttribute('data-index'));
+            backgroundKeyframes.splice(idx, 1);
+            renderBackgroundKeyframeTable();
+          });
         });
+      }
+
+      function renderImageSelect() {
+        imageSelect.innerHTML = '';
+        animationObjects[selectedObject].images.forEach((img) => {
+          const opt = document.createElement('option');
+          opt.value = img.id;
+          opt.textContent = img.label;
+          imageSelect.appendChild(opt);
+        });
+      }
+      renderImageSelect();
+
+      imageInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (evt) {
+          const label =
+            prompt(
+              'Enter image label/description:',
+              `Image ${animationObjects[selectedObject].images.length + 1}`
+            ) || `Image ${animationObjects[selectedObject].images.length + 1}`;
+          animationObjects[selectedObject].images.push({
+            id: nextImageId++,
+            label,
+            url: evt.target.result,
+          });
+          renderImageSelect();
+          renderImageList();
+        };
+        reader.readAsDataURL(file);
       });
-    }
+      //const addImageInput = document.getElementById("addImageInput");
 
-    function renderImageSelect() {
-      imageSelect.innerHTML = "";
-      animationObjects[selectedObject].images.forEach(img => {
-        const opt = document.createElement("option");
-        opt.value = img.id;
-        opt.textContent = img.label;
-        imageSelect.appendChild(opt);
-      });
-    }
-    renderImageSelect();
-
-    imageInput.addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        const label = prompt("Enter image label/description:", `Image ${animationObjects[selectedObject].images.length + 1}`) || `Image ${animationObjects[selectedObject].images.length + 1}`;
-        animationObjects[selectedObject].images.push({ id: nextImageId++, label, url: evt.target.result });
-        renderImageSelect();
-        renderImageList();
-      };
-      reader.readAsDataURL(file);
-    });
-    //const addImageInput = document.getElementById("addImageInput");
-
-    // Render the image list with thumbnails, rename, and remove
-    function renderImageList() {
-      imageList.innerHTML = "";
-      animationObjects[selectedObject].images.forEach(img => {
-        const li = document.createElement("li");
-        li.style.display = "flex";
-        li.style.alignItems = "center";
-        li.style.marginBottom = "6px";
-        li.innerHTML = `
+      // Render the image list with thumbnails, rename, and remove
+      function renderImageList() {
+        imageList.innerHTML = '';
+        animationObjects[selectedObject].images.forEach((img) => {
+          const li = document.createElement('li');
+          li.style.display = 'flex';
+          li.style.alignItems = 'center';
+          li.style.marginBottom = '6px';
+          li.innerHTML = `
           <img src="${img.url}" style="width:36px;height:36px;object-fit:contain;border:1px solid #ccc;margin-right:8px;">
           <input type="text" value="${img.label}" style="flex:1; margin-right:4px; min-width:0;">
           <button title="Remove" style="margin-left:2px;">🗑️</button>
         `;
-        // Rename handler
-        li.querySelector('input[type="text"]').addEventListener("change", (e) => {
-          img.label = e.target.value;
-          renderImageSelect();
-          renderKeyframeTable();
-        });
-        // Remove handler
-        li.querySelector('button').onclick = () => {
-          if (animationObjects[selectedObject].images.length === 1) {
-            alert("At least one image is required.");
-            return;
-          }
-          // Remove all keyframes using this imageId
-          for (let i = animationObjects[selectedObject].keyframes.length - 1; i >= 0; i--) {
-            if (animationObjects[selectedObject].keyframes[i].imageId === img.id) animationObjects[selectedObject].keyframes.splice(i, 1);
-          }
-          // Remove image
-          animationObjects[selectedObject].images = animationObjects[selectedObject].images.filter(i => i.id !== img.id);
-          // If current selection is gone, pick first
-          if (!animationObjects[selectedObject].images.find(i => i.id === currentState.imageId)) {
-            currentState.imageId = animationObjects[selectedObject].images[0].id;
-          }
-          renderImageSelect();
-          renderImageList();
-          renderKeyframeTable();
-          applyState(currentState);
-        };
-        // Highlight if selected
-        if (img.id === currentState.imageId) {
-          li.style.background = "#e0f0ff";
-        }
-        // Click thumbnail to select
-        li.querySelector('img').onclick = () => {
-          currentState.imageId = img.id;
-          imageSelect.value = img.id;
-          applyState(currentState);
-        };
-        imageList.appendChild(li);
-      });
-    }
-
-    // Add image button
-    addImageBtn.onclick = () => addImageInput.click();
-    addImageInput.onchange = e => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        const label = prompt("Enter image label/description:", `Image ${animationObjects[selectedObject].images.length + 1}`) || `Image ${animationObjects[selectedObject].images.length + 1}`;
-        animationObjects[selectedObject].images.push({ id: nextImageId++, label, url: evt.target.result });
-        renderImageSelect();
-        renderImageList();
-      };
-      reader.readAsDataURL(file);
-    };
-
-    // Call this after any image change
-    renderImageList();
-
-    // Save and load functionality
-    const saveBtn = document.getElementById("saveBtn");
-    const loadBtn = document.getElementById("loadBtn");
-    //const loadInput = document.getElementById("loadInput");
-
-    const projectNameInput = document.getElementById("projectName");
-
-    saveBtn.addEventListener("click", () => {
-      const projectName = projectNameInput.value.trim() || "animation_project";
-      const data = {
-        projectName,
-        objectImages,
-        keyframes,
-        currentState,
-        backgroundImages,         // <-- add this
-        backgroundKeyframes,      // <-- add this
-        currentBackground,
-        animationObjects,         // <-- add this
-        timelineMax: parseInt(timeline.max, 10) // <-- store current max
-      };
-      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = projectName.replace(/[\\/:*?"<>|]+/g, "_") + ".json";
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 0);
-    });
-
-    loadBtn.addEventListener("click", () => {
-      loadInput.click();
-    });
-
-    loadInput.addEventListener("change", (e) => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        try {
-          const data = JSON.parse(evt.target.result);
-          projectNameInput.value = data.projectName || "My Scrubber Project";
-          objectImages = data.objectImages || [];
-          keyframes.length = 0;
-          (data.keyframes || []).forEach(kf => keyframes.push(kf));
-          Object.assign(currentState, data.currentState || {});
-          // Restore backgrounds
-          backgroundImages = data.backgroundImages || [{ id: 1, label: "Default BG", url: "" }];
-          backgroundKeyframes = data.backgroundKeyframes || [];
-          currentBackground = data.currentBackground || { imageId: 1 };
-          
-          /// make sure array data for animationObjects is initialized
-          animationObjects.length = 0;
-          animationObjects.allObjects = [];
-          AnimationObject.allObjects = [];
-
-          // Restore animationObjects
-          if (Array.isArray(data.animationObjects)) {
-            data.animationObjects.forEach(objData => {
-              animationObjects.push(new AnimationObject(objData));
-            });
-            selectedObject = 0;
-            // Optionally restore currentState from the first object
-            if (animationObjects.length > 0) {
-              Object.assign(currentState, animationObjects[0].getState());
+          // Rename handler
+          li.querySelector('input[type="text"]').addEventListener('change', (e) => {
+            img.label = e.target.value;
+            renderImageSelect();
+            renderKeyframeTable();
+          });
+          // Remove handler
+          li.querySelector('button').onclick = () => {
+            if (animationObjects[selectedObject].images.length === 1) {
+              alert('At least one image is required.');
+              return;
             }
+            // Remove all keyframes using this imageId
+            for (let i = animationObjects[selectedObject].keyframes.length - 1; i >= 0; i--) {
+              if (animationObjects[selectedObject].keyframes[i].imageId === img.id)
+                animationObjects[selectedObject].keyframes.splice(i, 1);
+            }
+            // Remove image
+            animationObjects[selectedObject].images = animationObjects[
+              selectedObject
+            ].images.filter((i) => i.id !== img.id);
+            // If current selection is gone, pick first
+            if (
+              !animationObjects[selectedObject].images.find((i) => i.id === currentState.imageId)
+            ) {
+              currentState.imageId = animationObjects[selectedObject].images[0].id;
+            }
+            renderImageSelect();
+            renderImageList();
+            renderKeyframeTable();
+            applyState(currentState);
+          };
+          // Highlight if selected
+          if (img.id === currentState.imageId) {
+            li.style.background = '#e0f0ff';
           }
+          // Click thumbnail to select
+          li.querySelector('img').onclick = () => {
+            currentState.imageId = img.id;
+            imageSelect.value = img.id;
+            applyState(currentState);
+          };
+          imageList.appendChild(li);
+        });
+      }
 
-          // Restore timeline max (default to 200 if missing)
-          timeline.max = data.timelineMax || 100;
-          if (currentTime > timeline.max) {
-            currentTime = timeline.max;
-            timeline.value = currentTime;
-            updateFromTimeline();
-          }
-
-          // Update next IDs
-          nextImageId = animationObjects[selectedObject].images.reduce((max, img) => Math.max(max, img.id), 0) + 1;
-          nextBackgroundImageId = backgroundImages.reduce((max, img) => Math.max(max, img.id), 0) + 1;
+      // Add image button
+      addImageBtn.onclick = () => addImageInput.click();
+      addImageInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (evt) {
+          const label =
+            prompt(
+              'Enter image label/description:',
+              `Image ${animationObjects[selectedObject].images.length + 1}`
+            ) || `Image ${animationObjects[selectedObject].images.length + 1}`;
+          animationObjects[selectedObject].images.push({
+            id: nextImageId++,
+            label,
+            url: evt.target.result,
+          });
           renderImageSelect();
           renderImageList();
-          renderMarkers();
-          renderKeyframeTable();
-          renderBackgroundList();
-          renderBackgroundKeyframeTable();
-          applyState(currentState);
-          applyBackground(currentBackground);
-          renderObjectList();
-        } catch (err) {
-          alert("Failed to load project: " + err.message);
-        }
+        };
+        reader.readAsDataURL(file);
       };
-      reader.readAsText(file);
-    });
 
-    const backgroundPanel = document.getElementById("backgroundPanel");
-    const backgroundList = document.getElementById("backgroundList");
-    const addBackgroundBtn = document.getElementById("addBackgroundBtn");
-    const addBackgroundInput = document.getElementById("addBackgroundInput");
+      // Call this after any image change
+      renderImageList();
 
-    function renderBackgroundList() {
-      backgroundList.innerHTML = "";
-      backgroundImages.forEach(bg => {
-        const li = document.createElement("li");
-        li.style.display = "flex";
-        li.style.alignItems = "center";
-        li.style.marginBottom = "6px";
-        li.innerHTML = `
+      // Save and load functionality
+      const saveBtn = document.getElementById('saveBtn');
+      const loadBtn = document.getElementById('loadBtn');
+      //const loadInput = document.getElementById("loadInput");
+
+      const projectNameInput = document.getElementById('projectName');
+
+      saveBtn.addEventListener('click', () => {
+        const projectName = projectNameInput.value.trim() || 'animation_project';
+        const data = {
+          projectName,
+          objectImages,
+          keyframes,
+          currentState,
+          backgroundImages, // <-- add this
+          backgroundKeyframes, // <-- add this
+          currentBackground,
+          animationObjects, // <-- add this
+          timelineMax: parseInt(timeline.max, 10), // <-- store current max
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = projectName.replace(/[\\/:*?"<>|]+/g, '_') + '.json';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 0);
+      });
+
+      loadBtn.addEventListener('click', () => {
+        loadInput.click();
+      });
+
+      loadInput.addEventListener('change', (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (evt) {
+          try {
+            const data = JSON.parse(evt.target.result);
+            projectNameInput.value = data.projectName || 'My Scrubber Project';
+            objectImages = data.objectImages || [];
+            keyframes.length = 0;
+            (data.keyframes || []).forEach((kf) => keyframes.push(kf));
+            Object.assign(currentState, data.currentState || {});
+            // Restore backgrounds
+            backgroundImages = data.backgroundImages || [{ id: 1, label: 'Default BG', url: '' }];
+            backgroundKeyframes = data.backgroundKeyframes || [];
+            currentBackground = data.currentBackground || { imageId: 1 };
+
+            /// make sure array data for animationObjects is initialized
+            animationObjects.length = 0;
+            animationObjects.allObjects = [];
+            AnimationObject.allObjects = [];
+
+            // Restore animationObjects
+            if (Array.isArray(data.animationObjects)) {
+              data.animationObjects.forEach((objData) => {
+                animationObjects.push(new AnimationObject(objData));
+              });
+              selectedObject = 0;
+              // Optionally restore currentState from the first object
+              if (animationObjects.length > 0) {
+                Object.assign(currentState, animationObjects[0].getState());
+              }
+            }
+
+            // Restore timeline max (default to 200 if missing)
+            timeline.max = data.timelineMax || 100;
+            if (currentTime > timeline.max) {
+              currentTime = timeline.max;
+              timeline.value = currentTime;
+              updateFromTimeline();
+            }
+
+            // Update next IDs
+            nextImageId =
+              animationObjects[selectedObject].images.reduce(
+                (max, img) => Math.max(max, img.id),
+                0
+              ) + 1;
+            nextBackgroundImageId =
+              backgroundImages.reduce((max, img) => Math.max(max, img.id), 0) + 1;
+            renderImageSelect();
+            renderImageList();
+            renderMarkers();
+            renderKeyframeTable();
+            renderBackgroundList();
+            renderBackgroundKeyframeTable();
+            applyState(currentState);
+            applyBackground(currentBackground);
+            renderObjectList();
+          } catch (err) {
+            alert('Failed to load project: ' + err.message);
+          }
+        };
+        reader.readAsText(file);
+      });
+
+      const backgroundPanel = document.getElementById('backgroundPanel');
+      const backgroundList = document.getElementById('backgroundList');
+      const addBackgroundBtn = document.getElementById('addBackgroundBtn');
+      const addBackgroundInput = document.getElementById('addBackgroundInput');
+
+      function renderBackgroundList() {
+        backgroundList.innerHTML = '';
+        backgroundImages.forEach((bg) => {
+          const li = document.createElement('li');
+          li.style.display = 'flex';
+          li.style.alignItems = 'center';
+          li.style.marginBottom = '6px';
+          li.innerHTML = `
           <img src="${bg.url}" style="width:36px;height:36px;object-fit:contain;border:1px solid #ccc;margin-right:8px;">
           <input type="text" value="${bg.label}" style="flex:1; margin-right:4px; min-width:0;">
           <button title="Remove" style="margin-left:2px;">🗑️</button>
         `;
-        // Rename handler
-        li.querySelector('input[type="text"]').addEventListener("change", (e) => {
-          bg.label = e.target.value;
-          renderBackgroundList();
-          renderBackgroundKeyframeTable();
+          // Rename handler
+          li.querySelector('input[type="text"]').addEventListener('change', (e) => {
+            bg.label = e.target.value;
+            renderBackgroundList();
+            renderBackgroundKeyframeTable();
+          });
+          // Remove handler
+          li.querySelector('button').onclick = () => {
+            if (backgroundImages.length === 1) {
+              alert('At least one background is required.');
+              return;
+            }
+            // Remove all background keyframes using this imageId
+            for (let i = backgroundKeyframes.length - 1; i >= 0; i--) {
+              if (backgroundKeyframes[i].imageId === bg.id) backgroundKeyframes.splice(i, 1);
+            }
+            backgroundImages = backgroundImages.filter((i) => i.id !== bg.id);
+            if (!backgroundImages.find((i) => i.id === currentBackground.imageId)) {
+              currentBackground.imageId = backgroundImages[0].id;
+            }
+            renderBackgroundList();
+            renderBackgroundKeyframeTable();
+            applyBackground(currentBackground);
+          };
+          // Highlight if selected
+          if (bg.id === currentBackground.imageId) {
+            li.style.background = '#e0f0ff';
+          }
+          // Click thumbnail to select
+          li.querySelector('img').onclick = () => {
+            currentBackground.imageId = bg.id;
+            applyBackground(currentBackground);
+          };
+          backgroundList.appendChild(li);
         });
-        // Remove handler
-        li.querySelector('button').onclick = () => {
-          if (backgroundImages.length === 1) {
-            alert("At least one background is required.");
-            return;
-          }
-          // Remove all background keyframes using this imageId
-          for (let i = backgroundKeyframes.length - 1; i >= 0; i--) {
-            if (backgroundKeyframes[i].imageId === bg.id) backgroundKeyframes.splice(i, 1);
-          }
-          backgroundImages = backgroundImages.filter(i => i.id !== bg.id);
-          if (!backgroundImages.find(i => i.id === currentBackground.imageId)) {
-            currentBackground.imageId = backgroundImages[0].id;
-          }
+      }
+
+      addBackgroundBtn.onclick = () => addBackgroundInput.click();
+      addBackgroundInput.onchange = (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function (evt) {
+          const label =
+            prompt(
+              'Enter background label/description:',
+              `Background ${backgroundImages.length + 1}`
+            ) || `Background ${backgroundImages.length + 1}`;
+          backgroundImages.push({ id: nextBackgroundImageId++, label, url: evt.target.result });
           renderBackgroundList();
           renderBackgroundKeyframeTable();
-          applyBackground(currentBackground);
         };
-        // Highlight if selected
-        if (bg.id === currentBackground.imageId) {
-          li.style.background = "#e0f0ff";
-        }
-        // Click thumbnail to select
-        li.querySelector('img').onclick = () => {
-          currentBackground.imageId = bg.id;
-          applyBackground(currentBackground);
-        };
-        backgroundList.appendChild(li);
-      });
-    }
-
-    addBackgroundBtn.onclick = () => addBackgroundInput.click();
-    addBackgroundInput.onchange = e => {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(evt) {
-        const label = prompt("Enter background label/description:", `Background ${backgroundImages.length + 1}`) || `Background ${backgroundImages.length + 1}`;
-        backgroundImages.push({ id: nextBackgroundImageId++, label, url: evt.target.result });
-        renderBackgroundList();
-        renderBackgroundKeyframeTable();
+        reader.readAsDataURL(file);
       };
-      reader.readAsDataURL(file);
-    };
 
-    renderBackgroundList();
+      renderBackgroundList();
 
-    const backgroundDiv = document.getElementById("background");
+      const backgroundDiv = document.getElementById('background');
 
-    function applyBackground(state) {
-      const bg = backgroundImages.find(i => i.id === state.imageId) || backgroundImages[0];
-      backgroundDiv.style.backgroundImage = bg.url ? `url('${bg.url}')` : "";
-      backgroundDiv.style.backgroundSize = "cover";
-      backgroundDiv.style.backgroundPosition = "center";
-    }
+      function applyBackground(state) {
+        const bg = backgroundImages.find((i) => i.id === state.imageId) || backgroundImages[0];
+        backgroundDiv.style.backgroundImage = bg.url ? `url('${bg.url}')` : '';
+        backgroundDiv.style.backgroundSize = 'cover';
+        backgroundDiv.style.backgroundPosition = 'center';
+      }
 
-    function addBackgroundKeyframe() {
-      const time = parseFloat(timeline.value);
-      backgroundKeyframes.push({ time, imageId: currentBackground.imageId });
-      backgroundKeyframes.sort((a, b) => a.time - b.time);
-      renderBackgroundKeyframeTable();
-    }
-  </script>
-</body>
+      function addBackgroundKeyframe() {
+        const time = parseFloat(timeline.value);
+        backgroundKeyframes.push({ time, imageId: currentBackground.imageId });
+        backgroundKeyframes.sort((a, b) => a.time - b.time);
+        renderBackgroundKeyframeTable();
+      }
+
+      function jumpToEnd() {
+        currentTime = parseInt(timeline.max, 10);
+        timeline.value = currentTime;
+        updateFromTimeline();
+      }
+
+      function jumpToStart() {
+        currentTime = 0;
+        timeline.value = currentTime;
+        updateFromTimeline();
+      }
+    </script>
+  </body>
 </html>
