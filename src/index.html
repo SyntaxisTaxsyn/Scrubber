@@ -256,6 +256,8 @@
     >
       <h4 style="margin-top: 0">Objects</h4>
       <ul id="objectList" style="list-style: none; padding: 0; margin: 0 0 10px 0"></ul>
+      <button id="moveUpBtn" style="width: 100%; margin-bottom: 4px">Move Up</button>
+      <button id="moveDownBtn" style="width: 100%; margin-bottom: 10px">Move Down</button>
       <button id="addObjectBtn" style="width: 100%">Add Object</button>
     </div>
 
@@ -652,6 +654,8 @@
       const imageInput = document.getElementById('imageInput');
       const addImageInput = document.getElementById('addImageInput');
       const loadInput = document.getElementById('loadInput');
+      const moveUpButton = document.getElementById('moveUpBtn');
+      const moveDownButton = document.getElementById('moveDownBtn');
 
       const inputX = document.getElementById('inputX');
       const inputY = document.getElementById('inputY');
@@ -768,7 +772,7 @@
         });
       }
 
-      function renderObjectList() {
+      /* function renderObjectList() {
         objectList.innerHTML = '';
 
         animationObjects.forEach((obj, idx) => {
@@ -813,6 +817,67 @@
               obj.name = input.value.trim() || `Object ${obj.id}`;
               renderObjectList();
             };
+            input.addEventListener('blur', saveName);
+            input.addEventListener('keydown', (e) => {
+              if (e.key === 'Enter') saveName();
+            });
+          });
+
+          objectList.appendChild(li);
+        });
+      }
+ */
+
+      function renderObjectList() {
+        const list = AnimationObject.allObjects;
+
+        objectList.innerHTML = '';
+
+        moveUpButton.disabled = selectedObject <= 0;
+        moveDownButton.disabled = selectedObject < 0 || selectedObject >= list.length - 1;
+
+        list.forEach((obj, idx) => {
+          const li = document.createElement('li');
+          li.textContent = obj.name;
+          li.style.cursor = 'pointer';
+          li.style.padding = '4px 8px';
+          li.style.borderRadius = '4px';
+          li.style.marginBottom = '4px';
+          li.style.background = idx === selectedObject ? '#e0f0ff' : '';
+
+          let clickTimer;
+
+          li.addEventListener('click', () => {
+            clickTimer = setTimeout(() => {
+              selectedObject = idx;
+              renderObjectList();
+              renderImageSelect();
+              renderImageList();
+              renderMarkers();
+              renderKeyframeTable();
+              showSelectedObject(idx);
+              applyState(AnimationObject.allObjects[selectedObject].getState());
+            }, 200);
+          });
+
+          li.addEventListener('dblclick', () => {
+            clearTimeout(clickTimer);
+
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = obj.name;
+            input.style.width = '100%';
+
+            li.innerHTML = '';
+            li.appendChild(input);
+            input.focus();
+            input.select();
+
+            const saveName = () => {
+              obj.name = input.value.trim() || `Object ${obj.id}`;
+              renderObjectList();
+            };
+
             input.addEventListener('blur', saveName);
             input.addEventListener('keydown', (e) => {
               if (e.key === 'Enter') saveName();
@@ -1713,6 +1778,34 @@
         timeline.value = currentTime;
         updateFromTimeline();
       }
+
+      moveUpButton.addEventListener('click', () => {
+        const list = AnimationObject.allObjects;
+
+        if (selectedObject <= 0 || selectedObject >= list.length) return;
+
+        const temp = list[selectedObject];
+        list[selectedObject] = list[selectedObject - 1];
+        list[selectedObject - 1] = temp;
+
+        selectedObject -= 1;
+
+        renderObjectList();
+      });
+
+      moveDownButton.addEventListener('click', () => {
+        const list = AnimationObject.allObjects;
+
+        if (selectedObject < 0 || selectedObject >= list.length - 1) return;
+
+        const temp = list[selectedObject];
+        list[selectedObject] = list[selectedObject + 1];
+        list[selectedObject + 1] = temp;
+
+        selectedObject += 1;
+
+        renderObjectList();
+      });
     </script>
   </body>
 </html>
