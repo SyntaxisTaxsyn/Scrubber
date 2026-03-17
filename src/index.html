@@ -39,7 +39,7 @@
       }
 
       input[type='range'] {
-        width: 300px;
+        width: 800px;
         vertical-align: middle;
       }
 
@@ -62,7 +62,7 @@
         top: 50%;
         left: 0;
         height: 8px;
-        width: 300px;
+        width: 800px;
         transform: translateY(-50%);
         pointer-events: none;
       }
@@ -181,10 +181,12 @@
         <input type="range" id="timeline" min="0" max="200" value="0" />
         <div id="markerTrack"></div>
       </div>
+      <br />
       <button id="addKeyframe">Add Keyframe</button>
       <button id="togglePlay">Play</button>
       <button id="changeImageBtn">Change Image</button>
       <button id="resetBtn">Reset</button>
+      <br />
       <button id="saveBtn">Save</button>
       <button id="loadBtn">Load</button>
       <button id="increaseTimeBtn">+100</button>
@@ -204,6 +206,7 @@
       <label>Opacity: <input type="number" id="inputOpacity" min="0" max="100" step="1" /></label>
       <label>Visible: <input type="checkbox" id="inputVisible" /></label>
       <label>Mirror: <input type="checkbox" id="inputMirror" /></label>
+      <br />
       <label
         >Image:
         <select id="imageSelect"></select>

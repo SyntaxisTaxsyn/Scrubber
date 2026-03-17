@@ -31,10 +31,10 @@
 - [x] press buttons to remove tyres
 - [x] press tyres to install new ones from a side pile
 - [x] mcqueen goes back to racing again
-- [ ] He passes chick hicks and king again
-- [ ] he wins the race, goes past the checkerd line
-- [ ] he goes inside mac trailer
-- [ ] mac trailer drives away
+- [x] He passes chick hicks and king again
+- [x] he wins the race, goes past the checkerd line
+- [x] he goes inside mac trailer
+- [x] mac trailer drives away
 
 ## Characters
 
