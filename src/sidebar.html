@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Right Organizer Sidebar Tabs</title>
+
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        font-family: sans-serif;
+      }
+
+      main {
+        padding: 24px;
+      }
+
+      /* Sidebar panel */
+      .sidebar {
+        position: fixed;
+        top: 0;
+        right: 0;
+        height: 100vh;
+        width: 280px;
+        background: #222;
+        color: white;
+        transform: translateX(100%);
+        transition: transform 0.25s ease;
+        display: flex;
+        z-index: 1000;
+      }
+
+      .sidebar.active {
+        transform: translateX(0);
+      }
+
+      /* Organizer-style tab */
+      .tab {
+        position: absolute;
+        left: -40px;
+        width: 40px;
+        height: 130px;
+        background: #444;
+        color: white;
+        cursor: pointer;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+        user-select: none;
+        transition: opacity 0.2s ease;
+      }
+
+      .tab:hover {
+        background: #666;
+      }
+
+      /* Hide tabs when needed */
+      .tab.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* Panel content */
+      .content {
+        flex: 1;
+        padding: 16px;
+        overflow-y: auto;
+      }
+
+      /* Close button */
+      .close {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: none;
+        border: none;
+        color: white;
+        font-size: 20px;
+        cursor: pointer;
+      }
+
+      .close:hover {
+        color: #ff7777;
+      }
+    </style>
+  </head>
+
+  <body>
+    <!-- Notes Panel -->
+    <div class="sidebar" id="notes">
+      <div class="tab" style="top: 80px" onclick="togglePanel('notes')">Notes</div>
+      <button class="close" onclick="closePanels()">×</button>
+      <div class="content">
+        <h2>Notes</h2>
+        <p>This panel is always on top when open.</p>
+      </div>
+    </div>
+
+    <!-- Tasks Panel -->
+    <div class="sidebar" id="tasks">
+      <div class="tab" style="top: 240px" onclick="togglePanel('tasks')">Tasks</div>
+      <button class="close" onclick="closePanels()">×</button>
+      <div class="content">
+        <h2>Tasks</h2>
+        <p>Other tabs are hidden while this is open.</p>
+      </div>
+    </div>
+
+    <main>
+      <h1>Main Content</h1>
+      <p>Only tabs are visible when panels are closed.</p>
+      <p>Opening one hides the others.</p>
+    </main>
+
+    <script>
+      function togglePanel(id) {
+        const panels = document.querySelectorAll('.sidebar');
+        const target = document.getElementById(id);
+
+        const opening = !target.classList.contains('active');
+
+        panels.forEach((panel) => {
+          panel.classList.remove('active');
+        });
+
+        if (opening) {
+          target.classList.add('active');
+          hideOtherTabs(id);
+        } else {
+          showAllTabs();
+        }
+      }
+
+      function closePanels() {
+        document.querySelectorAll('.sidebar').forEach((panel) => {
+          panel.classList.remove('active');
+        });
+        showAllTabs();
+      }
+
+      function hideOtherTabs(activeId) {
+        document.querySelectorAll('.sidebar').forEach((panel) => {
+          const tab = panel.querySelector('.tab');
+          if (panel.id !== activeId) {
+            tab.classList.add('hidden');
+          }
+        });
+      }
+
+      function showAllTabs() {
+        document.querySelectorAll('.tab').forEach((tab) => {
+          tab.classList.remove('hidden');
+        });
+      }
+    </script>
+  </body>
+</html>

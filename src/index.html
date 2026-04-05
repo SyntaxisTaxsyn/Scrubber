@@ -147,10 +147,151 @@
           opacity: 1;
         }
       }
+
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        font-family: sans-serif;
+      }
+
+      main {
+        padding: 24px;
+      }
+
+      /* Sidebar panel */
+      .sidebar {
+        position: fixed;
+        top: 0;
+        right: 0;
+        height: 100vh;
+        width: 400px;
+        background: #222;
+        color: white;
+        transform: translateX(100%);
+        transition: transform 0.25s ease;
+        display: flex;
+        z-index: 1000;
+      }
+
+      .sidebar.active {
+        transform: translateX(0);
+      }
+
+      /* Organizer-style tab */
+      .tab {
+        position: absolute;
+        left: -40px;
+        width: 40px;
+        height: 130px;
+        background: #444;
+        color: white;
+        cursor: pointer;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        writing-mode: vertical-rl;
+        transform: rotate(180deg);
+        user-select: none;
+        transition: opacity 0.2s ease;
+      }
+
+      .tab:hover {
+        background: #666;
+      }
+
+      /* Hide tabs when needed */
+      .tab.hidden {
+        opacity: 0;
+        pointer-events: none;
+      }
+
+      /* Panel content */
+      .content {
+        flex: 1;
+        padding: 16px;
+        overflow-y: auto;
+      }
+
+      /* Close button */
+      .close {
+        position: absolute;
+        top: 10px;
+        left: 10px;
+        background: none;
+        border: none;
+        color: white;
+        font-size: 20px;
+        cursor: pointer;
+      }
+
+      .close:hover {
+        color: #ff7777;
+      }
+
+      .object-panel {
+        background: #f8f8f8;
+        border: 1px solid #ccc;
+        padding: 12px;
+        color: #000;
+      }
+
+      /* Clean button layout */
+      .object-panel button {
+        width: 100%;
+        margin-bottom: 6px;
+      }
+
+      /* List reset */
+      .object-panel ul {
+        list-style: none;
+        padding: 0;
+        margin: 0 0 10px 0;
+      }
     </style>
   </head>
   <body>
     <h2>Scrubber Project Editor</h2>
+
+    <!-- Objects Panel -->
+    <div class="sidebar" id="objects">
+      <div class="tab" style="top: 80px" onclick="togglePanel('objects')">Objects</div>
+      <button class="close" onclick="closePanels()">×</button>
+      <div class="content">
+        <h2>Objects</h2>
+        <div id="objectListPanel" class="object-panel">
+          <h4>Objects</h4>
+
+          <ul id="objectList"></ul>
+
+          <button id="moveUpBtn">Move Up</button>
+          <button id="moveDownBtn">Move Down</button>
+          <button id="addObjectBtn">Add Object</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Object images Panel -->
+    <div class="sidebar" id="object-images">
+      <div class="tab" style="top: 240px" onclick="togglePanel('object-images')">Object Images</div>
+      <button class="close" onclick="closePanels()">×</button>
+      <div class="content">
+        <h2>Object Images</h2>
+        <p>Other tabs are hidden while this is open.</p>
+      </div>
+    </div>
+
+    <!-- Backgrounds Panel -->
+    <div class="sidebar" id="backgrounds">
+      <div class="tab" style="top: 400px" onclick="togglePanel('backgrounds')">Backgrounds</div>
+      <button class="close" onclick="closePanels()">×</button>
+      <div class="content">
+        <h2>Backgrounds</h2>
+        <p>Other tabs are hidden while this is open.</p>
+      </div>
+    </div>
 
     <label>
       Project Name:
@@ -245,25 +386,6 @@
       <button id="addBackgroundBtn" style="width: 100%">Add Background</button>
     </div>
 
-    <div
-      id="objectListPanel"
-      style="
-        position: absolute;
-        right: 540px;
-        top: 60px;
-        width: 180px;
-        background: #f8f8f8;
-        border: 1px solid #ccc;
-        padding: 12px;
-      "
-    >
-      <h4 style="margin-top: 0">Objects</h4>
-      <ul id="objectList" style="list-style: none; padding: 0; margin: 0 0 10px 0"></ul>
-      <button id="moveUpBtn" style="width: 100%; margin-bottom: 4px">Move Up</button>
-      <button id="moveDownBtn" style="width: 100%; margin-bottom: 10px">Move Down</button>
-      <button id="addObjectBtn" style="width: 100%">Add Object</button>
-    </div>
-
     <table id="keyframeTable">
       <thead>
         <tr>
@@ -311,6 +433,46 @@
       const showAllObjectsCheckbox = document.getElementById('showAllObjectsCheckbox');
 
       let pausedForInteraction = false;
+
+      function togglePanel(id) {
+        const panels = document.querySelectorAll('.sidebar');
+        const target = document.getElementById(id);
+
+        const opening = !target.classList.contains('active');
+
+        panels.forEach((panel) => {
+          panel.classList.remove('active');
+        });
+
+        if (opening) {
+          target.classList.add('active');
+          hideOtherTabs(id);
+        } else {
+          showAllTabs();
+        }
+      }
+
+      function closePanels() {
+        document.querySelectorAll('.sidebar').forEach((panel) => {
+          panel.classList.remove('active');
+        });
+        showAllTabs();
+      }
+
+      function hideOtherTabs(activeId) {
+        document.querySelectorAll('.sidebar').forEach((panel) => {
+          const tab = panel.querySelector('.tab');
+          if (panel.id !== activeId) {
+            tab.classList.add('hidden');
+          }
+        });
+      }
+
+      function showAllTabs() {
+        document.querySelectorAll('.tab').forEach((tab) => {
+          tab.classList.remove('hidden');
+        });
+      }
 
       class AnimationObject {
         static allObjects = []; // keep track of all instances
@@ -774,62 +936,6 @@
           InteractionFlagSeen: false,
         });
       }
-
-      /* function renderObjectList() {
-        objectList.innerHTML = '';
-
-        animationObjects.forEach((obj, idx) => {
-          const li = document.createElement('li');
-          li.textContent = obj.name;
-          li.style.cursor = 'pointer';
-          li.style.padding = '4px 8px';
-          li.style.borderRadius = '4px';
-          li.style.marginBottom = '4px';
-          li.style.background = idx === selectedObject ? '#e0f0ff' : '';
-
-          let clickTimer;
-
-          li.addEventListener('click', () => {
-            // Delay to see if it's a double click
-            clickTimer = setTimeout(() => {
-              selectedObject = idx;
-              renderObjectList();
-              renderImageSelect();
-              renderImageList();
-              renderMarkers();
-              renderKeyframeTable();
-              showSelectedObject(idx);
-              applyState(animationObjects[selectedObject].getState());
-            }, 200); // faster double-click response
-          });
-
-          li.addEventListener('dblclick', () => {
-            clearTimeout(clickTimer); // cancel single-click action
-
-            const input = document.createElement('input');
-            input.type = 'text';
-            input.value = obj.name;
-            input.style.width = '100%';
-
-            li.innerHTML = '';
-            li.appendChild(input);
-            input.focus();
-            input.select(); // highlight all text immediately
-
-            const saveName = () => {
-              obj.name = input.value.trim() || `Object ${obj.id}`;
-              renderObjectList();
-            };
-            input.addEventListener('blur', saveName);
-            input.addEventListener('keydown', (e) => {
-              if (e.key === 'Enter') saveName();
-            });
-          });
-
-          objectList.appendChild(li);
-        });
-      }
- */
 
       function renderObjectList() {
         const list = AnimationObject.allObjects;
